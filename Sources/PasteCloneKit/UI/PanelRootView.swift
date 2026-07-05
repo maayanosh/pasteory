@@ -2,11 +2,6 @@ import SwiftUI
 
 public struct PanelRootView: View {
     @EnvironmentObject var state: AppState
-    @State private var scrollCoordinator = CardScrollCoordinator()
-
-    private static let cardWidth: CGFloat = 240
-    private static let cardSpacing: CGFloat = 12
-    private static let rowLeading: CGFloat = 16
 
     public init() {}
 
@@ -43,40 +38,43 @@ public struct PanelRootView: View {
     }
 
     private var cardRow: some View {
-        CardScrollView(coordinator: scrollCoordinator) {
-            LazyHStack(spacing: Self.cardSpacing) {
-                let items = state.filteredItems
-                if items.isEmpty {
-                    emptyState
-                }
-                ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                    CardView(
-                        item: item,
-                        isSelected: item.id == state.selectionID || state.multiSelection.contains(item.id),
-                        quickPasteNumber: state.showNumbers && index < 9 ? index + 1 : nil
-                    )
-                    .onTapGesture(count: 2) { state.pasteService.paste(item) }
-                    .onTapGesture {
-                        if NSEvent.modifierFlags.contains(.command) {
-                            state.toggleMultiSelect(item.id)
-                            state.selectionID = item.id
-                        } else {
-                            state.clearMultiSelection()
-                            state.selectionID = item.id
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(spacing: 12) {
+                    let items = state.filteredItems
+                    if items.isEmpty {
+                        emptyState
+                    }
+                    ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                        CardView(
+                            item: item,
+                            isSelected: item.id == state.selectionID || state.multiSelection.contains(item.id),
+                            quickPasteNumber: state.showNumbers && index < 9 ? index + 1 : nil
+                        )
+                        .id(item.id)
+                        .onTapGesture(count: 2) { state.pasteService.paste(item) }
+                        .onTapGesture {
+                            if NSEvent.modifierFlags.contains(.command) {
+                                state.toggleMultiSelect(item.id)
+                                state.selectionID = item.id
+                            } else {
+                                state.clearMultiSelection()
+                                state.selectionID = item.id
+                            }
                         }
                     }
                 }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
+                .padding(.top, 4)
             }
-            .padding(.horizontal, Self.rowLeading)
-            .padding(.bottom, 16)
-            .padding(.top, 4)
-        }
-        .onChange(of: state.selectionID) { _, id in
-            guard let id, let index = state.filteredItems.firstIndex(where: { $0.id == id }) else { return }
-            scrollCoordinator.scrollToIndex(
-                index, cardWidth: Self.cardWidth, spacing: Self.cardSpacing,
-                leading: Self.rowLeading, animated: true
-            )
+            .onChange(of: state.selectionID) { _, id in
+                if let id {
+                    withAnimation(.easeOut(duration: 0.15)) {
+                        proxy.scrollTo(id, anchor: .center)
+                    }
+                }
+            }
         }
     }
 

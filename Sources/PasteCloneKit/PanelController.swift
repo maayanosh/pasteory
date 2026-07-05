@@ -19,6 +19,7 @@ public final class PanelController {
     private var keyMonitor: Any?
     private var flagsMonitor: Any?
     private var outsideClickMonitor: Any?
+    private var scrollMonitor: Any?
 
     public init(appState: AppState, pasteService: PasteService) {
         self.appState = appState
@@ -125,15 +126,24 @@ public final class PanelController {
         ) { [weak self] _ in
             Task { @MainActor in self?.hidePanel() }
         }
+        // SwiftUI's ScrollView(.horizontal) only responds to trackpad
+        // horizontal swipes, not a plain mouse wheel — but Paste's own
+        // timeline does. Rather than replace the scroll view (which broke
+        // keyboard-driven scroll-to-selection), swap the wheel event's axes
+        // and let the same, already-working ScrollView handle it.
+        scrollMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { event in
+            horizontalizedWheelEvent(event) ?? event
+        }
     }
 
     private func removeMonitors() {
-        for monitor in [keyMonitor, flagsMonitor, outsideClickMonitor].compactMap({ $0 }) {
+        for monitor in [keyMonitor, flagsMonitor, outsideClickMonitor, scrollMonitor].compactMap({ $0 }) {
             NSEvent.removeMonitor(monitor)
         }
         keyMonitor = nil
         flagsMonitor = nil
         outsideClickMonitor = nil
+        scrollMonitor = nil
     }
 
     /// Returns nil to consume the event.
@@ -242,4 +252,24 @@ public final class PanelController {
             editor.setSelectedRange(NSRange(location: end, length: 0))
         }
     }
+}
+
+/// Swaps a scroll-wheel event's vertical/horizontal deltas so a plain mouse
+/// wheel drives horizontal scrolling. Trackpad swipes already carry a
+/// meaningful horizontal delta and are passed through untouched. Returns nil
+/// when the event can't be transformed (e.g. no backing CGEvent), in which
+/// case the caller falls back to the original event.
+private func horizontalizedWheelEvent(_ event: NSEvent) -> NSEvent? {
+    guard abs(event.scrollingDeltaX) < 0.01, abs(event.scrollingDeltaY) > 0.01,
+          let cgEvent = event.cgEvent?.copy()
+    else { return nil }
+
+    let vertical = cgEvent.getDoubleValueField(.scrollWheelEventDeltaAxis1)
+    let verticalPoint = cgEvent.getDoubleValueField(.scrollWheelEventPointDeltaAxis1)
+    cgEvent.setDoubleValueField(.scrollWheelEventDeltaAxis1, value: 0)
+    cgEvent.setDoubleValueField(.scrollWheelEventPointDeltaAxis1, value: 0)
+    cgEvent.setDoubleValueField(.scrollWheelEventDeltaAxis2, value: vertical)
+    cgEvent.setDoubleValueField(.scrollWheelEventPointDeltaAxis2, value: verticalPoint)
+
+    return NSEvent(cgEvent: cgEvent)
 }
