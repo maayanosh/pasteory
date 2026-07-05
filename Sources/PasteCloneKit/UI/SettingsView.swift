@@ -1,0 +1,96 @@
+import SwiftUI
+import AppKit
+
+struct SettingsView: View {
+    @ObservedObject var settings: Settings
+    @ObservedObject var store: Store
+
+    var body: some View {
+        Form {
+            Section("General") {
+                Toggle("Pause clipboard capture", isOn: $settings.isPaused)
+                Toggle("Launch at login", isOn: $settings.launchAtLogin)
+                Picker("Keep history", selection: $settings.historyLimit) {
+                    Text("100 items").tag(100)
+                    Text("500 items").tag(500)
+                    Text("1000 items").tag(1000)
+                }
+                LabeledContent("Open Paste", value: "⇧⌘V")
+            }
+            Section("Privacy — Excluded Apps") {
+                if settings.excludedBundleIDs.isEmpty {
+                    Text("Copies from excluded apps are never saved.")
+                        .foregroundStyle(.secondary)
+                }
+                ForEach(settings.excludedBundleIDs, id: \.self) { bid in
+                    HStack {
+                        Image(nsImage: IconCache.shared.icon(forBundleID: bid))
+                        Text(bid)
+                        Spacer()
+                        Button {
+                            settings.excludedBundleIDs.removeAll { $0 == bid }
+                        } label: {
+                            Image(systemName: "minus.circle.fill")
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                Button("Add App…") { addApp() }
+            }
+            Section("Data") {
+                Button("Clear History", role: .destructive) {
+                    store.clearHistory()
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .frame(width: 440, height: 420)
+        .onChange(of: settings.historyLimit) { _, limit in
+            store.historyLimit = limit
+        }
+    }
+
+    private func addApp() {
+        let panel = NSOpenPanel()
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        panel.allowedContentTypes = [.application]
+        panel.allowsMultipleSelection = false
+        guard panel.runModal() == .OK, let url = panel.url,
+              let bundle = Bundle(url: url), let bid = bundle.bundleIdentifier
+        else { return }
+        if !settings.excludedBundleIDs.contains(bid) {
+            settings.excludedBundleIDs.append(bid)
+        }
+    }
+}
+
+@MainActor
+public final class SettingsWindowController {
+    private var window: NSWindow?
+    private let settings: Settings
+    private let store: Store
+
+    public init(settings: Settings, store: Store) {
+        self.settings = settings
+        self.store = store
+    }
+
+    public func show() {
+        if window == nil {
+            let view = SettingsView(settings: settings, store: store)
+            let win = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 440, height: 420),
+                styleMask: [.titled, .closable],
+                backing: .buffered,
+                defer: false
+            )
+            win.title = "PasteClone Settings"
+            win.contentView = NSHostingView(rootView: view)
+            win.isReleasedWhenClosed = false
+            win.center()
+            window = win
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        window?.makeKeyAndOrderFront(nil)
+    }
+}
