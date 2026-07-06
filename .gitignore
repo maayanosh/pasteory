@@ -3,3 +3,9 @@ build/
 *.o
 *.swiftmodule
 .DS_Store
+.swiftpm/
+*.xcodeproj/
+.vscode/
+.idea/
+*.xcworkspace/
+xcuserdata/
