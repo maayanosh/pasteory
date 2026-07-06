@@ -46,7 +46,7 @@ struct CardView: View {
         .contextMenu { contextMenu }
         .onDrag {
             switch item.kind {
-            case .text, .richText, .link:
+            case .text, .richText, .link, .color:
                 return NSItemProvider(object: (item.text ?? "") as NSString)
             case .file:
                 let path = (item.text ?? "").split(separator: "\n").first.map(String.init) ?? ""
@@ -83,6 +83,7 @@ struct CardView: View {
         case .image: "photo"
         case .link: "link"
         case .file: "doc"
+        case .color: "paintpalette"
         }
     }
 
@@ -147,6 +148,18 @@ struct CardView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(12)
+            case .color:
+                let parsed = parseColorString(item.text ?? "")
+                    ?? ParsedColor(red: 0, green: 0, blue: 0)
+                ZStack {
+                    Color(red: parsed.red, green: parsed.green, blue: parsed.blue)
+                        .opacity(parsed.alpha)
+                    Text((item.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines))
+                        .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(parsed.luminance > 0.6 ? Color.black : .white)
+                        .lineLimit(2)
+                        .padding(8)
+                }
             }
         }
     }

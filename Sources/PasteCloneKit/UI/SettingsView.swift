@@ -15,7 +15,15 @@ struct SettingsView: View {
                     Text("500 items").tag(500)
                     Text("1000 items").tag(1000)
                 }
-                LabeledContent("Open Paste", value: "⇧⌘V")
+                HStack {
+                    Text("Panel opacity")
+                    Slider(value: $settings.panelOpacity, in: 0.3...1.0)
+                    Text("\(Int((settings.panelOpacity * 100).rounded()))%")
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                        .frame(width: 40, alignment: .trailing)
+                }
+                LabeledContent("Open Clap", value: "⇧⌘V")
             }
             Section("Privacy — Excluded Apps") {
                 if settings.excludedBundleIDs.isEmpty {
@@ -84,7 +92,7 @@ public final class SettingsWindowController {
                 backing: .buffered,
                 defer: false
             )
-            win.title = "PasteClone Settings"
+            win.title = "Clap Settings"
             win.contentView = NSHostingView(rootView: view)
             win.isReleasedWhenClosed = false
             win.center()

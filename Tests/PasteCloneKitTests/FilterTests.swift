@@ -64,6 +64,26 @@ func filterTests() {
         expectEqual(state.selectedItem?.text, "i3")
     }
 
+    test("stale selection resets to first card on movement") {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("PasteCloneTests-stale-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let store = Store(directory: dir)
+        guard let defaults = UserDefaults(suiteName: "test-\(UUID())") else {
+            return expect(false, "no defaults suite")
+        }
+        let state = AppState(store: store, settings: Settings(defaults: defaults))
+        for i in 1...3 {
+            store.insert(ClipItem(kind: .text, text: "i\(i)",
+                                  contentHash: ContentHasher.hash("i\(i)")))
+        }
+        state.panelDidShow()
+        state.selectionID = UUID() // points at nothing visible
+        state.moveSelection(by: 1)
+        expectEqual(state.selectedItem?.text, "i3",
+                    "should land on the first card, not skip to the second")
+    }
+
     test("multi-selection toggles and orders left-to-right on screen") {
         let dir = FileManager.default.temporaryDirectory
             .appendingPathComponent("PasteCloneTests-multisel-\(UUID().uuidString)")

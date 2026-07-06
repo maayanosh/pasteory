@@ -1,31 +1,39 @@
 import SwiftUI
 
 public enum AppColors {
-    // 10-hue palette used for card headers; index chosen by stable hash of bundle id.
+    // 16-hue palette used for card headers and pinboard tabs; every entry is a
+    // distinct hue so hashed apps (and consecutive pinboards) spread out
+    // instead of clustering on lookalike yellows/blues.
     public static let palette: [String] = [
         "#4A90D9", // blue
-        "#E8B93E", // yellow
-        "#5FB3E8", // sky
-        "#E8A33E", // amber
-        "#5E5CE6", // indigo
+        "#E8734A", // orange
+        "#4CAF6E", // green
         "#A550A7", // purple
-        "#3C3C43", // gray-black
+        "#E8B93E", // yellow
         "#4CC2E8", // cyan
         "#E85C5C", // red
-        "#4CAF6E", // green
+        "#3AB5A0", // teal
+        "#5E5CE6", // indigo
+        "#8FBE4F", // lime
+        "#E06C9F", // pink
+        "#A97B54", // brown
+        "#9B8CE8", // lavender
+        "#6E8CA0", // slate
+        "#2E7D5B", // forest
+        "#3C3C43", // gray-black
     ]
 
     static let overrides: [String: String] = [
-        "com.apple.Safari": "#4A90D9",
-        "com.google.Chrome": "#E8B93E",
-        "com.apple.finder": "#5FB3E8",
-        "com.apple.Notes": "#E8A33E",
-        "com.microsoft.VSCode": "#5E5CE6",
-        "com.tinyspeck.slackmacgap": "#A550A7",
-        "com.apple.Terminal": "#3C3C43",
-        "com.googlecode.iterm2": "#3C3C43",
-        "com.apple.mail": "#4CC2E8",
-        "com.apple.dt.Xcode": "#4A90D9",
+        "com.apple.Safari": "#4A90D9",         // blue
+        "com.google.Chrome": "#E8734A",        // orange
+        "com.apple.finder": "#4CC2E8",         // cyan
+        "com.apple.Notes": "#E8B93E",          // yellow
+        "com.microsoft.VSCode": "#5E5CE6",     // indigo
+        "com.tinyspeck.slackmacgap": "#A550A7",// purple
+        "com.apple.Terminal": "#3C3C43",       // gray-black
+        "com.googlecode.iterm2": "#2E7D5B",    // forest
+        "com.apple.mail": "#3AB5A0",           // teal
+        "com.apple.dt.Xcode": "#6E8CA0",       // slate
     ]
 
     /// Stable across launches (Swift's hashValue is seed-randomized per process,

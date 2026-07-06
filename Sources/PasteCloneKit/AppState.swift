@@ -67,7 +67,12 @@ public final class AppState: ObservableObject {
     public func moveSelection(by delta: Int) {
         let visible = filteredItems
         guard !visible.isEmpty else { return }
-        let current = visible.firstIndex { $0.id == selectionID } ?? 0
+        guard let current = visible.firstIndex(where: { $0.id == selectionID }) else {
+            // Stale/absent selection: land on the first card instead of
+            // treating it as index 0 and skipping ahead.
+            selectionID = visible.first?.id
+            return
+        }
         let next = min(max(current + delta, 0), visible.count - 1)
         selectionID = visible[next].id
     }

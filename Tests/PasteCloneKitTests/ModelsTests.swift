@@ -41,4 +41,40 @@ func modelsTests() {
         expect(looksLikeCode("def f():\n    pass"))
         expect(!looksLikeCode("Just a normal sentence."))
     }
+
+    test("parses hex colors") {
+        expectEqual(parseColorString("#FF5733"),
+                    ParsedColor(red: 1, green: 87.0 / 255, blue: 51.0 / 255))
+        expectEqual(parseColorString("  #ff5733  "),
+                    parseColorString("#FF5733"), "trims and is case-insensitive")
+        expectEqual(parseColorString("#f00"), ParsedColor(red: 1, green: 0, blue: 0))
+        expectEqual(parseColorString("#ff000080")?.alpha ?? -1, 128.0 / 255,
+                    "8-digit hex carries alpha")
+    }
+
+    test("parses rgb/rgba and hsl/hsla") {
+        expectEqual(parseColorString("rgb(255, 0, 0)"), ParsedColor(red: 1, green: 0, blue: 0))
+        expectEqual(parseColorString("rgba(0, 0, 255, 0.5)"),
+                    ParsedColor(red: 0, green: 0, blue: 1, alpha: 0.5))
+        expectEqual(parseColorString("rgb(100%, 0%, 50%)"),
+                    ParsedColor(red: 1, green: 0, blue: 0.5))
+        expectEqual(parseColorString("hsl(0, 100%, 50%)"),
+                    ParsedColor(red: 1, green: 0, blue: 0), "pure red")
+        expectEqual(parseColorString("hsl(120, 100%, 50%)"),
+                    ParsedColor(red: 0, green: 1, blue: 0), "pure green")
+        expectEqual(parseColorString("hsla(240, 100%, 50%, 50%)"),
+                    ParsedColor(red: 0, green: 0, blue: 1, alpha: 0.5))
+    }
+
+    test("rejects non-colors") {
+        expect(parseColorString("hello") == nil)
+        expect(parseColorString("#GGG123") == nil, "not hex digits")
+        expect(parseColorString("#123") == nil, "shorthand needs a hex letter (issue refs)")
+        expect(parseColorString("#12345") == nil, "wrong length")
+        expect(parseColorString("rgb(300, 0, 0)") == nil, "channel out of range")
+        expect(parseColorString("rgb(1, 2)") == nil, "too few channels")
+        expect(parseColorString("hsl(400, 100%, 50%)") == nil, "hue out of range")
+        expect(parseColorString("hsl(0, 1, 0.5)") == nil, "hsl needs percentages")
+        expect(parseColorString("#FF5733 and more text") == nil, "must be the whole string")
+    }
 }

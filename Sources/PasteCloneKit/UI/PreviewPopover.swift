@@ -57,6 +57,18 @@ struct PreviewPopover: View {
                     .aspectRatio(contentMode: .fit)
                     .padding(12)
             }
+        case .color:
+            let parsed = parseColorString(item.text ?? "")
+                ?? ParsedColor(red: 0, green: 0, blue: 0)
+            ZStack {
+                Color(red: parsed.red, green: parsed.green, blue: parsed.blue)
+                    .opacity(parsed.alpha)
+                Text((item.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines))
+                    .font(.system(size: 17, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(parsed.luminance > 0.6 ? Color.black : .white)
+                    .textSelection(.enabled)
+            }
+            .frame(width: 460, height: 280)
         case .file:
             VStack(spacing: 10) {
                 ForEach((item.text ?? "").split(separator: "\n").prefix(6), id: \.self) { path in

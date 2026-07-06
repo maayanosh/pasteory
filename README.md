@@ -1,4 +1,4 @@
-# PasteClone
+# Clap
 
 A native macOS clipboard manager inspired by [Paste](https://pasteapp.io) — a
 bottom slide-up panel, color-coded history cards, pinboards, search, and
@@ -8,7 +8,7 @@ your Mac.
 
 ## Features
 
-- **Global hotkey** (default **⇧⌘V**) slides a translucent panel up from the
+- **Global hotkey** (**⇧⌘V**) slides a translucent panel up from the
   bottom of the screen without stealing focus from the app you were using.
 - **Horizontal card timeline** of clipboard history — text, rich text,
   images, links, and file references — each card color-coded by source app.
@@ -40,7 +40,7 @@ cd pasteory
 make open
 ```
 
-`make open` builds `build/PasteClone.app`, ad-hoc code-signs it, and opens it.
+`make open` builds `build/Clap.app`, ad-hoc code-signs it, and opens it.
 Other useful targets:
 
 | Command       | What it does                                      |
@@ -61,9 +61,9 @@ Other useful targets:
 Pasting into the previously active app is done by simulating ⌘V, which
 requires the Accessibility permission:
 
-1. Run `make open` once — PasteClone will prompt you.
+1. Run `make open` once — Clap will prompt you.
 2. Go to **System Settings → Privacy & Security → Accessibility** and enable
-   **PasteClone**.
+   **Clap**.
 3. Re-open the app if it doesn't pick up the permission immediately.
 
 Note: because the app is ad-hoc signed, you'll need to re-grant this
@@ -88,6 +88,8 @@ Clipboard history and pinboards are stored locally at
 | ⇧ + Return | Paste as plain text (strips formatting) |
 | ⌘C | Copy selected item back to the clipboard without pasting |
 | ⌘1–⌘9 (hold ⌘) | Quick-paste one of the first 9 items |
+| ⌘-click | Add cards to a multi-selection; Return pastes them all in order |
+| ⌘R | Rename the selected item (also in the right-click menu) |
 | Space | Quick Look preview of the selected item |
 | ⇧⌘N | Create a new pinboard |
 | Delete | Remove the selected item |
@@ -102,8 +104,13 @@ Sources/PasteClone/         Executable entry point (main.swift)
 Sources/PasteCloneKit/      Core app logic (state, clipboard monitor, panel, pasteboard I/O)
 Sources/PasteCloneKit/UI/   SwiftUI views (cards, search bar, settings, pinboards)
 Tests/PasteCloneKitTests/   Self-contained unit test harness (not XCTest)
+scripts/make-icon.swift     Draws the app icon (regenerate with `make icon`)
 PLAN.md                     Design/research notes this project was built from
 ```
+
+The code predates the Clap name, so internal identifiers (module names, the
+`com.local.pasteclone` bundle id, the `PasteClone` data directory) keep the
+original naming.
 
 Run the test suite with:
 
@@ -123,6 +130,6 @@ tests where practical (`make test` should stay green).
 
 MIT — see [LICENSE](LICENSE).
 
-PasteClone is an independent, unaffiliated project inspired by the design of
+Clap is an independent, unaffiliated project inspired by the design of
 [Paste](https://pasteapp.io). It is not endorsed by or affiliated with
 Paste/Wivpro Corp.

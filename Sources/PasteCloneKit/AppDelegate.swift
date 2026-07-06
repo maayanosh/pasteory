@@ -34,6 +34,16 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
 
         setupStatusItem()
 
+        // First launch: reveal the panel once, so a fresh install isn't just
+        // a silent new menu-bar icon. The empty state explains the hotkey.
+        let defaults = UserDefaults.standard
+        if !defaults.bool(forKey: "hasShownWelcome") {
+            defaults.set(true, forKey: "hasShownWelcome")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+                self?.panelController.showPanel()
+            }
+        }
+
         // Debug hook so the panel can be shown without the global hotkey
         // (used by automated verification).
         if ProcessInfo.processInfo.environment["PASTECLONE_SHOW_ON_LAUNCH"] == "1" {
@@ -51,11 +61,11 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem.button?.image = NSImage(
             systemSymbolName: "doc.on.clipboard",
-            accessibilityDescription: "PasteClone"
+            accessibilityDescription: "Clap"
         )
 
         let menu = NSMenu()
-        let openItem = NSMenuItem(title: "Open Paste", action: #selector(openPanel), keyEquivalent: "v")
+        let openItem = NSMenuItem(title: "Open Clap", action: #selector(openPanel), keyEquivalent: "v")
         openItem.keyEquivalentModifierMask = [.command, .shift]
         openItem.target = self
         menu.addItem(openItem)
@@ -75,7 +85,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(clearItem)
 
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "Quit PasteClone", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: "Quit Clap", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
 
         menu.delegate = self
         statusItem.menu = menu

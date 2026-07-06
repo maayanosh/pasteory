@@ -8,7 +8,8 @@
 SWIFTC = swiftc
 KIT_SRC := $(shell find Sources/PasteCloneKit -name '*.swift')
 TEST_SRC := $(shell find Tests/PasteCloneKitTests -name '*.swift')
-APP = build/PasteClone.app
+APP = build/Clap.app
+ICONSET = build/AppIcon.iconset
 
 all: bundle
 
@@ -29,18 +30,32 @@ test: build/PasteCloneTests
 
 bundle: build/PasteClone
 	mkdir -p $(APP)/Contents/MacOS $(APP)/Contents/Resources
-	cp build/PasteClone $(APP)/Contents/MacOS/
+	cp build/PasteClone $(APP)/Contents/MacOS/Clap
 	cp Resources/Info.plist $(APP)/Contents/
+	cp Resources/AppIcon.icns $(APP)/Contents/Resources/
+	xattr -cr $(APP)   # sips/iconutil leave xattrs codesign rejects as "detritus"
 	codesign --force --deep --sign - $(APP)
 
 run: bundle
-	$(APP)/Contents/MacOS/PasteClone
+	$(APP)/Contents/MacOS/Clap
 
 open: bundle
 	open $(APP)
 
 kill:
-	pkill -x PasteClone || true
+	pkill -x Clap || true
+
+# Regenerates Resources/AppIcon.icns from the drawing script. Only needed
+# when scripts/make-icon.swift changes; the .icns is committed.
+icon: scripts/make-icon.swift
+	mkdir -p build $(ICONSET)
+	$(SWIFTC) scripts/make-icon.swift -o build/make-icon
+	./build/make-icon build/icon-1024.png
+	for s in 16 32 128 256 512; do \
+	  sips -z $$s $$s build/icon-1024.png --out $(ICONSET)/icon_$${s}x$${s}.png >/dev/null; \
+	  sips -z $$((s*2)) $$((s*2)) build/icon-1024.png --out $(ICONSET)/icon_$${s}x$${s}@2x.png >/dev/null; \
+	done
+	iconutil -c icns $(ICONSET) -o Resources/AppIcon.icns
 
 clean:
 	rm -rf build .build

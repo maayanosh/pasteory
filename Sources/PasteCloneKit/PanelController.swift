@@ -39,7 +39,9 @@ public final class PanelController {
         panel.isMovableByWindowBackground = false
         panel.hasShadow = true
 
-        let root = PanelRootView().environmentObject(appState)
+        let root = PanelRootView()
+            .environmentObject(appState)
+            .environmentObject(appState.settings)
         let hosting = NSHostingView(rootView: root)
         hosting.frame = panel.contentRect(forFrameRect: panel.frame)
         hosting.autoresizingMask = [.width, .height]
@@ -131,8 +133,14 @@ public final class PanelController {
         // timeline does. Rather than replace the scroll view (which broke
         // keyboard-driven scroll-to-selection), swap the wheel event's axes
         // and let the same, already-working ScrollView handle it.
-        scrollMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { event in
-            horizontalizedWheelEvent(event) ?? event
+        scrollMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
+            // Only the card row scrolls sideways — leave the Quick Look
+            // preview's vertical text scroller and other windows (Settings)
+            // alone.
+            guard let self, event.window === self.panel,
+                  self.appState.previewItem == nil
+            else { return event }
+            return horizontalizedWheelEvent(event) ?? event
         }
     }
 
@@ -159,10 +167,17 @@ public final class PanelController {
         let mods = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         let hasCmd = mods.contains(.command)
 
-        // ⌘1–⌘9 quick paste
-        if hasCmd, let chars = event.charactersIgnoringModifiers,
+        // ⌘1–⌘9 quick paste (base character, so ⇧⌘1 doesn't read as "!"
+        // and still pastes as plain text)
+        if hasCmd, let chars = event.characters(byApplyingModifiers: []),
            let n = Int(chars), (1...9).contains(n) {
             state.paste(at: n - 1, plainText: mods.contains(.shift))
+            return nil
+        }
+        // ⇧⌘N new pinboard
+        if hasCmd, mods.contains(.shift),
+           event.charactersIgnoringModifiers?.lowercased() == "n" {
+            createPinboardInteractively(state: state)
             return nil
         }
         // ⌘F focus search

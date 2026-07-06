@@ -53,12 +53,7 @@ struct PinboardTabs: View {
     }
 
     private func createPinboard() {
-        if let name = promptForText(title: "New Pinboard",
-                                    message: "Name your pinboard:",
-                                    defaultValue: "Pinboard \(state.store.pinboards.count + 1)") {
-            let board = state.store.addPinboard(name: name)
-            state.selectedTab = board.id
-        }
+        createPinboardInteractively(state: state)
     }
 
     private func rename(_ board: Pinboard) {
@@ -67,6 +62,18 @@ struct PinboardTabs: View {
                                     defaultValue: board.name) {
             state.store.renamePinboard(board.id, to: name)
         }
+    }
+}
+
+/// Shared by the "+" tab button and the ⇧⌘N shortcut in PanelController.
+@MainActor
+func createPinboardInteractively(state: AppState) {
+    if let name = promptForText(title: "New Pinboard",
+                                message: "Name your pinboard:",
+                                defaultValue: "Pinboard \(state.store.pinboards.count + 1)") {
+        let board = state.store.addPinboard(name: name)
+        state.selectedTab = board.id
+        state.ensureSelectionValid()
     }
 }
 

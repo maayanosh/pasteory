@@ -40,7 +40,7 @@ public final class PasteService {
                 pb.setData(rtf, forType: .rtf)
             }
             pb.setString(item.text ?? "", forType: .string)
-        case .text, .link:
+        case .text, .link, .color:
             pb.setString(item.text ?? "", forType: .string)
         }
 

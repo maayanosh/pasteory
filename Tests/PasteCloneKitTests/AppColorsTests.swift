@@ -18,6 +18,11 @@ func appColorsTests() {
         expectEqual(AppColors.hex(for: nil), "#3C3C43")
     }
 
+    test("palette entries are unique") {
+        expectEqual(Set(AppColors.palette).count, AppColors.palette.count,
+                    "duplicate hues defeat the point of a bigger palette")
+    }
+
     test("luminance drives header text color") {
         expect(AppColors.luminance(ofHex: "#FFFFFF") > 0.9)
         expect(AppColors.luminance(ofHex: "#000000") < 0.1)

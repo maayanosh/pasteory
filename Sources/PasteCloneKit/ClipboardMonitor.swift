@@ -110,6 +110,16 @@ public final class ClipboardMonitor {
         // the rich representation differs.
         let hash = ContentHasher.hash("text:" + raw)
 
+        // A copied color string becomes a swatch card; its formatting (some
+        // editors attach RTF) isn't worth keeping.
+        if parseColorString(raw) != nil {
+            return ClipItem(
+                kind: .color, text: raw,
+                sourceAppBundleID: bundleID, sourceAppName: appName,
+                contentHash: hash
+            )
+        }
+
         if let rtfData = pb.data(forType: .rtf) {
             let filename = UUID().uuidString + ".rtf"
             try? rtfData.write(to: store.contentURL(filename))

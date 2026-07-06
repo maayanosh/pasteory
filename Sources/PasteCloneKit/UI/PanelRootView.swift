@@ -2,6 +2,7 @@ import SwiftUI
 
 public struct PanelRootView: View {
     @EnvironmentObject var state: AppState
+    @EnvironmentObject var settings: Settings
 
     public init() {}
 
@@ -17,7 +18,7 @@ public struct PanelRootView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.ultraThinMaterial)
+        .background(.ultraThinMaterial.opacity(settings.panelOpacity))
         .clipShape(UnevenRoundedRectangle(topLeadingRadius: 16, topTrailingRadius: 16))
         .overlay(alignment: .top) {
             UnevenRoundedRectangle(topLeadingRadius: 16, topTrailingRadius: 16)
@@ -86,6 +87,11 @@ public struct PanelRootView: View {
             Text(state.query.isEmpty ? "Nothing here yet — copy something!" : "No results")
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
+            if state.query.isEmpty {
+                Text("Open this panel anytime with ⇧⌘V")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.tertiary)
+            }
         }
         .frame(width: 400, height: 280)
     }

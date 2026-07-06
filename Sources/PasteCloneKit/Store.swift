@@ -31,9 +31,15 @@ public final class Store: ObservableObject {
     // MARK: - Persistence
 
     private func load() {
-        guard let data = try? Data(contentsOf: storeFile),
-              let snapshot = try? JSONDecoder().decode(Snapshot.self, from: data)
-        else { return }
+        guard let data = try? Data(contentsOf: storeFile) else { return }
+        guard let snapshot = try? JSONDecoder().decode(Snapshot.self, from: data) else {
+            // Unreadable store: set it aside so the next save doesn't
+            // overwrite data the user might want to recover.
+            let backup = directory.appendingPathComponent("store.json.corrupt")
+            try? FileManager.default.removeItem(at: backup)
+            try? FileManager.default.moveItem(at: storeFile, to: backup)
+            return
+        }
         items = snapshot.items
         pinboards = snapshot.pinboards
     }

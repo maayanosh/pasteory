@@ -21,6 +21,11 @@ public final class Settings: ObservableObject {
             applyLaunchAtLogin()
         }
     }
+    /// Panel background opacity, 0.3...1.0. Lower values let the windows
+    /// behind the panel show through.
+    @Published public var panelOpacity: Double {
+        didSet { defaults.set(panelOpacity, forKey: "panelOpacity") }
+    }
 
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -29,6 +34,8 @@ public final class Settings: ObservableObject {
         let limit = defaults.integer(forKey: "historyLimit")
         self.historyLimit = limit == 0 ? 500 : limit
         self.launchAtLogin = defaults.bool(forKey: "launchAtLogin")
+        let opacity = defaults.double(forKey: "panelOpacity")
+        self.panelOpacity = opacity == 0 ? 0.85 : min(max(opacity, 0.3), 1.0)
     }
 
     private func applyLaunchAtLogin() {
