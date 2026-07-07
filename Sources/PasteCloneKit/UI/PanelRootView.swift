@@ -33,6 +33,15 @@ public struct PanelRootView: View {
             PinboardTabs()
             Spacer()
             SearchBar()
+            Button("Quit") {
+                NSApp.terminate(nil)
+            }
+            .buttonStyle(.plain)
+            .font(.system(size: 12))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
         }
         .padding(.horizontal, 16)
         .frame(height: 44)
