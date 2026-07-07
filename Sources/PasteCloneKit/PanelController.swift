@@ -75,6 +75,18 @@ public final class PanelController {
         panel.orderFrontRegardless()
         panel.makeKey()
 
+        // Becoming key hands first-responder to the panel's only focusable
+        // view — the search field — which puts the panel in search mode
+        // (arrows edit text, Esc clears the query) before the user asked
+        // for it. Start in browse mode; typing any character re-focuses the
+        // field via appendToQuery. SwiftUI assigns focus on the next runloop
+        // turn, so the reset has to be scheduled one tick out.
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.isVisible else { return }
+            self.panel.makeFirstResponder(nil)
+            self.appState.searchFocused = false
+        }
+
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = 0.22
             ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
