@@ -233,11 +233,15 @@ public final class PanelController {
             }
             return nil
         case 123: // ←
-            if !state.searchFocused { state.moveSelection(by: -1); return nil }
-            return event
+            // Arrows always drive the cards, even mid-search: leave the
+            // field (keeping the query filter) and move on the results.
+            state.searchFocused = false
+            state.moveSelection(by: -1)
+            return nil
         case 124: // →
-            if !state.searchFocused { state.moveSelection(by: 1); return nil }
-            return event
+            state.searchFocused = false
+            state.moveSelection(by: 1)
+            return nil
         case 49: // Space
             if !state.searchFocused {
                 state.previewItem = state.previewItem == nil ? state.selectedItem : nil
