@@ -64,6 +64,31 @@ public final class ClipboardMonitor {
             forClasses: [NSURL.self],
             options: [.urlReadingFileURLsOnly: true]
         ) as? [URL], !urls.isEmpty {
+            // Single image file → treat as an image card so we get a visual preview.
+            if urls.count == 1,
+               let uti = try? urls[0].resourceValues(forKeys: [.typeIdentifierKey]).typeIdentifier,
+               UTTypeConformsTo(uti as CFString, "public.image" as CFString),
+               let image = NSImage(contentsOf: urls[0]),
+               let png = pngData(from: image),
+               png.count <= Self.maxImageBytes {
+                let filename = UUID().uuidString + ".png"
+                guard (try? png.write(to: store.contentURL(filename))) != nil else {
+                    return nil
+                }
+                var thumbFilename: String?
+                if let thumbPNG = thumbnailData(from: image, maxDimension: 480) {
+                    let name = UUID().uuidString + "-thumb.png"
+                    if (try? thumbPNG.write(to: store.contentURL(name))) != nil {
+                        thumbFilename = name
+                    }
+                }
+                return ClipItem(
+                    kind: .image, imageFile: filename, thumbFile: thumbFilename,
+                    sourceAppBundleID: bundleID, sourceAppName: appName,
+                    contentHash: ContentHasher.hash(png)
+                )
+            }
+
             let paths = urls.map(\.path).joined(separator: "\n")
             return ClipItem(
                 kind: .file, text: paths,

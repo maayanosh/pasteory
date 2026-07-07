@@ -126,9 +126,11 @@ struct CardView: View {
                    let nsImage = ImageCache.shared.image(at: state.store.contentURL(file)) {
                     Image(nsImage: nsImage)
                         .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 240, height: 214)
-                        .clipped()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: 200, maxHeight: 160)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     Image(systemName: "photo")
                         .font(.system(size: 32))
@@ -136,18 +138,39 @@ struct CardView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             case .file:
-                VStack(spacing: 8) {
-                    let firstPath = (item.text ?? "").split(separator: "\n").first.map(String.init) ?? ""
-                    Image(nsImage: NSWorkspace.shared.icon(forFile: firstPath))
-                        .resizable()
-                        .frame(width: 48, height: 48)
-                    Text(URL(fileURLWithPath: firstPath).lastPathComponent)
-                        .font(.system(size: 12, weight: .medium))
-                        .lineLimit(2)
-                        .multilineTextAlignment(.center)
+                let paths = (item.text ?? "").split(separator: "\n").map(String.init)
+                if paths.count == 1 {
+                    VStack(spacing: 8) {
+                        Image(nsImage: NSWorkspace.shared.icon(forFile: paths[0]))
+                            .resizable()
+                            .frame(width: 48, height: 48)
+                        Text(URL(fileURLWithPath: paths[0]).lastPathComponent)
+                            .font(.system(size: 12, weight: .medium))
+                            .lineLimit(2)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(12)
+                } else {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 6) {
+                            ForEach(paths, id: \.self) { path in
+                                HStack(spacing: 8) {
+                                    Image(nsImage: NSWorkspace.shared.icon(forFile: path))
+                                        .resizable()
+                                        .frame(width: 24, height: 24)
+                                    Text(URL(fileURLWithPath: path).lastPathComponent)
+                                        .font(.system(size: 11))
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
+                                    Spacer(minLength: 0)
+                                }
+                            }
+                        }
+                        .padding(12)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(12)
             case .color:
                 let parsed = parseColorString(item.text ?? "")
                     ?? ParsedColor(red: 0, green: 0, blue: 0)
