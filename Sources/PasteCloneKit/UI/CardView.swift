@@ -165,20 +165,68 @@ struct CardView: View {
     }
 
     private var footer: some View {
-        HStack(spacing: 6) {
-            Image(nsImage: IconCache.shared.icon(forBundleID: item.sourceAppBundleID))
-            Text(relativeTimeString(from: item.createdAt))
-                .font(.system(size: 10))
-                .foregroundStyle(.secondary)
-            Spacer()
-            if item.pinboardID != nil {
-                Image(systemName: "pin.fill")
-                    .font(.system(size: 9))
+        ZStack {
+            HStack(spacing: 6) {
+                Image(nsImage: IconCache.shared.icon(forBundleID: item.sourceAppBundleID))
+                Text(relativeTimeString(from: item.createdAt))
+                    .font(.system(size: 10))
                     .foregroundStyle(.secondary)
+                Spacer()
+                if item.pinboardID != nil {
+                    Image(systemName: "pin.fill")
+                        .font(.system(size: 9))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            if let label = footerCenterLabel {
+                Text(label)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.tertiary)
             }
         }
         .padding(.horizontal, 12)
         .frame(height: 30)
+    }
+
+    private var footerCenterLabel: String? {
+        switch item.kind {
+        case .text, .richText:
+            guard let text = item.text else { return nil }
+            let byteSize = formatSize(Int64(Data(text.utf8).count))
+            return "\(text.count) chars · \(byteSize)"
+        case .file:
+            let paths = (item.text ?? "").split(separator: "\n").map(String.init)
+            let total = paths.reduce(Int64(0)) { acc, path in
+                let size = (try? FileManager.default.attributesOfItem(atPath: path)[.size] as? Int64) ?? 0
+                return acc + size
+            }
+            return total > 0 ? formatSize(total) : nil
+        case .image:
+            if let file = item.imageFile {
+                let url = state.store.contentURL(file)
+                let size = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int64) ?? 0
+                return size > 0 ? formatSize(size) : nil
+            }
+            return nil
+        case .link, .color:
+            return nil
+        }
+    }
+
+    private func formatSize(_ bytes: Int64) -> String {
+        let units = ["bytes", "KB", "MB", "GB", "TB"]
+        var value = Double(bytes)
+        var unitIndex = 0
+        while value >= 1024 && unitIndex < units.count - 1 {
+            value /= 1024
+            unitIndex += 1
+        }
+        if unitIndex == 0 {
+            return "\(bytes) bytes"
+        }
+        return value < 10
+            ? String(format: "%.1f %@", value, units[unitIndex])
+            : String(format: "%.0f %@", value, units[unitIndex])
     }
 
     @ViewBuilder
