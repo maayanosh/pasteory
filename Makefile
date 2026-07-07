@@ -29,6 +29,10 @@ test: build/PasteCloneTests
 	./build/PasteCloneTests
 
 bundle: build/PasteClone
+	# Assemble from scratch: once the app has been launched, macOS stamps it
+	# with SIP-protected com.apple.provenance xattrs that xattr can't clear
+	# and codesign rejects as detritus.
+	rm -rf $(APP)
 	mkdir -p $(APP)/Contents/MacOS $(APP)/Contents/Resources
 	cp build/PasteClone $(APP)/Contents/MacOS/Clap
 	cp Resources/Info.plist $(APP)/Contents/
