@@ -100,13 +100,17 @@ Clipboard history and pinboards are stored locally at
 Project layout:
 
 ```
+Sources/ClapCore/           Platform-agnostic core (models, store, settings, selection, palette, hashing, seam protocols)
 Sources/PasteClone/         Executable entry point (main.swift)
-Sources/PasteCloneKit/      Core app logic (state, clipboard monitor, panel, pasteboard I/O)
+Sources/PasteCloneKit/      macOS layer: AppKit/SwiftUI glue implementing ClapCore's platform seams
 Sources/PasteCloneKit/UI/   SwiftUI views (cards, search bar, settings, pinboards)
-Tests/PasteCloneKitTests/   Self-contained unit test harness (not XCTest)
+Tests/ClapCoreTests/        Core unit tests (SHA-256, models, palette, filter, store)
+Tests/PasteCloneKitTests/   macOS-layer unit test harness (not XCTest)
 scripts/make-icon.swift     Draws the app icon (regenerate with `make icon`)
 PLAN.md                     Design/research notes this project was built from
 ```
+
+`ClapCore` imports only Foundation and Observation; it defines the `Paster`, `ClipboardSource`, `GlobalHotKey`, and `LaunchAtLoginController` seams that a future non-macOS front-end would implement.
 
 The code predates the Clap name, so internal identifiers (module names, the
 `com.local.pasteclone` bundle id, the `PasteClone` data directory) keep the
