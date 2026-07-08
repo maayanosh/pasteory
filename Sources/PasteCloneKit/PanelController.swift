@@ -196,6 +196,11 @@ public final class PanelController {
             state.searchFocused = true
             return nil
         }
+        // ⌘A select all in the search field
+        if hasCmd, event.charactersIgnoringModifiers?.lowercased() == "a", state.searchFocused {
+            (panel.firstResponder as? NSTextView)?.selectAll(nil)
+            return nil
+        }
         // ⌘C copy selected (only while browsing cards)
         if hasCmd, event.charactersIgnoringModifiers == "c", !state.searchFocused {
             state.copySelected()
