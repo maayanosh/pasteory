@@ -41,7 +41,7 @@ public final class PanelController {
 
         let root = PanelRootView()
             .environmentObject(appState)
-            .environmentObject(appState.settings)
+            .environment(appState.settings)
         let hosting = NSHostingView(rootView: root)
         hosting.frame = panel.contentRect(forFrameRect: panel.frame)
         hosting.autoresizingMask = [.width, .height]

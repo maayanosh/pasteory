@@ -17,7 +17,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
-        settings = Settings()
+        settings = Settings(loginController: MacLaunchAtLogin())
         store = Store()
         store.historyLimit = settings.historyLimit
         appState = AppState(store: store, settings: settings)

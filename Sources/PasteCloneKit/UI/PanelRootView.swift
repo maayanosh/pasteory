@@ -2,7 +2,7 @@ import SwiftUI
 
 public struct PanelRootView: View {
     @EnvironmentObject var state: AppState
-    @EnvironmentObject var settings: Settings
+    @Environment(Settings.self) private var settings
 
     public init() {}
 
