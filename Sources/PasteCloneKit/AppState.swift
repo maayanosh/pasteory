@@ -1,29 +1,27 @@
 import AppKit
-import Combine
+#if canImport(ClapCore)
+import ClapCore
+#endif
 
+@Observable
 @MainActor
-public final class AppState: ObservableObject {
-    @Published public var query = ""
-    @Published public var selectedTab: UUID?          // nil = History
-    @Published public var selectionID: UUID?
-    @Published public var multiSelection: Set<UUID> = []  // ⌘-click additions, pasted in order on Return
-    @Published public var showNumbers = false         // ⌘ held → quick-paste badges
-    @Published public var searchFocused = false
-    @Published public var previewItem: ClipItem?
+public final class AppState {
+    public var query = ""
+    public var selectedTab: UUID?          // nil = History
+    public var selectionID: UUID?
+    public var multiSelection: Set<UUID> = []  // ⌘-click additions, pasted in order on Return
+    public var showNumbers = false         // ⌘ held → quick-paste badges
+    public var searchFocused = false
+    public var previewItem: ClipItem?
 
     public let store: Store
     public let settings: Settings
+    @ObservationIgnored
     public var pasteService: PasteService!
-
-    private var cancellables: Set<AnyCancellable> = []
 
     public init(store: Store, settings: Settings) {
         self.store = store
         self.settings = settings
-        // Re-publish store changes so SwiftUI views observing AppState refresh.
-        store.objectWillChange
-            .sink { [weak self] in self?.objectWillChange.send() }
-            .store(in: &cancellables)
     }
 
     // MARK: - Filtering (pure, unit-tested)

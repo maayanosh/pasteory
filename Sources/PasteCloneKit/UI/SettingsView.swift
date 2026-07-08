@@ -3,7 +3,7 @@ import AppKit
 
 struct SettingsView: View {
     @Bindable var settings: Settings
-    @ObservedObject var store: Store
+    @Bindable var store: Store
 
     var body: some View {
         Form {

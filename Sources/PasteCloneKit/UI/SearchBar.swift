@@ -1,11 +1,12 @@
 import SwiftUI
 
 struct SearchBar: View {
-    @EnvironmentObject var state: AppState
+    @Environment(AppState.self) private var state
     @FocusState private var focused: Bool
 
     var body: some View {
-        HStack(spacing: 6) {
+        @Bindable var state = state
+        return HStack(spacing: 6) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)

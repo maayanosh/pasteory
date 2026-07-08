@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PinboardTabs: View {
-    @EnvironmentObject var state: AppState
+    @Environment(AppState.self) private var state
 
     var body: some View {
         HStack(spacing: 4) {

@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Quick Look-style large preview shown over the card row (Space toggles).
 struct PreviewPopover: View {
-    @EnvironmentObject var state: AppState
+    @Environment(AppState.self) private var state
     let item: ClipItem
 
     var body: some View {

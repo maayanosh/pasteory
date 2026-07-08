@@ -40,7 +40,7 @@ public final class PanelController {
         panel.hasShadow = true
 
         let root = PanelRootView()
-            .environmentObject(appState)
+            .environment(appState)
             .environment(appState.settings)
         let hosting = NSHostingView(rootView: root)
         hosting.frame = panel.contentRect(forFrameRect: panel.frame)

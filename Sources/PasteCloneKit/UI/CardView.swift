@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct CardView: View {
-    @EnvironmentObject var state: AppState
+    @Environment(AppState.self) private var state
     let item: ClipItem
     let isSelected: Bool
     let quickPasteNumber: Int?
