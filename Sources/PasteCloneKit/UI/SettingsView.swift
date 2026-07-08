@@ -10,10 +10,12 @@ struct SettingsView: View {
             Section("General") {
                 Toggle("Pause clipboard capture", isOn: $settings.isPaused)
                 Toggle("Launch at login", isOn: $settings.launchAtLogin)
+                Toggle("Auto-paste on Enter", isOn: $settings.pasteOnEnter)
                 Picker("Keep history", selection: $settings.historyLimit) {
                     Text("100 items").tag(100)
                     Text("500 items").tag(500)
                     Text("1000 items").tag(1000)
+                    Text("Forever").tag(Int.max)
                 }
                 HStack {
                     Text("Panel opacity")
@@ -46,6 +48,7 @@ struct SettingsView: View {
                 Button("Add App…") { addApp() }
             }
             Section("Data") {
+                LabeledContent("Cached data size", value: formatDataSize(store.totalDataSize()))
                 Button("Clear History", role: .destructive) {
                     store.clearHistory()
                 }
@@ -54,8 +57,16 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .frame(width: 440, height: 420)
         .onChange(of: settings.historyLimit) { _, limit in
-            store.historyLimit = limit
+            store.historyLimit = limit  // Int.max → no limit enforced
         }
+    }
+
+    private func formatDataSize(_ bytes: Int64) -> String {
+        let units = ["bytes", "KB", "MB", "GB"]
+        var value = Double(bytes)
+        var idx = 0
+        while value >= 1024 && idx < units.count - 1 { value /= 1024; idx += 1 }
+        return idx == 0 ? "\(bytes) bytes" : String(format: "%.1f %@", value, units[idx])
     }
 
     private func addApp() {

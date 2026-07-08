@@ -59,7 +59,6 @@ public final class PanelController {
         let screen = screenWithMouse() ?? NSScreen.main
         guard let screen else { return }
 
-        pasteService.previousApp = NSWorkspace.shared.frontmostApplication
         appState.panelDidShow()
 
         let target = NSRect(
@@ -228,8 +227,11 @@ public final class PanelController {
         case 36: // Return
             if !state.multiSelection.isEmpty {
                 state.pasteMultiSelection(plainText: mods.contains(.shift))
-            } else {
+            } else if state.settings.pasteOnEnter {
                 state.pasteSelected(plainText: mods.contains(.shift))
+            } else {
+                state.copySelected()
+                hidePanel()
             }
             return nil
         case 123: // ←

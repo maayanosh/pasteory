@@ -4,16 +4,30 @@ import AppKit
 public final class PasteService {
     private let store: Store
     private let monitor: ClipboardMonitor
-    /// The app that was frontmost before the panel opened; set by PanelController.
+    /// The last non-Clap app that was frontmost. Updated automatically via
+    /// Workspace notifications so it stays correct even when the Carbon hotkey
+    /// briefly activates this process before showPanel() runs.
     public var previousApp: NSRunningApplication?
     /// Called before synthesizing ⌘V so the panel can dismiss itself.
     public var willPaste: (() -> Void)?
 
     private var promptedForAccessibility = false
+    private var workspaceObserver: NSObjectProtocol?
 
     public init(store: Store, monitor: ClipboardMonitor) {
         self.store = store
         self.monitor = monitor
+
+        workspaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] note in
+            guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
+                  app.bundleIdentifier != Bundle.main.bundleIdentifier
+            else { return }
+            self?.previousApp = app
+        }
     }
 
     /// Copy the item to the system pasteboard without pasting.
@@ -56,8 +70,9 @@ public final class PasteService {
 
         guard ensureAccessibility() else { return } // degraded: copy-only
 
-        // Give the target app time to become key before the keystroke lands.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+        // Give the panel animation (0.18s) time to finish and the target app
+        // time to become key before the keystroke lands.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             Self.sendCmdV()
         }
     }
