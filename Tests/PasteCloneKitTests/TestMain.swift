@@ -53,7 +53,7 @@ struct TestRunner {
         print("PasteClone test suite\n")
         print("ModelsTests");    modelsTests()
         print("SHA256Tests");    sha256Tests()
-        print("AppColorsTests"); appColorsTests()
+        print("AppColorsTests"); paletteTests()
         print("StoreTests");     storeTests()
         print("FilterTests");    filterTests()
         print("")
