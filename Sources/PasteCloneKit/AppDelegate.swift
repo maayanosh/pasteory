@@ -21,6 +21,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         store = Store()
         store.historyLimit = settings.historyLimit
         monitor = ClipboardMonitor(store: store, settings: settings)
+        monitor.onCapture = { [weak self] item in self?.store.insert(item) }
         pasteService = PasteService(store: store, monitor: monitor)
         appState = AppState(store: store, settings: settings, paster: pasteService)
         panelController = PanelController(appState: appState, pasteService: pasteService)
@@ -29,7 +30,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         monitor.start()
 
         hotKey = HotKey() // ⇧⌘V
-        hotKey.handler = { [weak self] in self?.panelController.toggle() }
+        hotKey.register { [weak self] in self?.panelController.toggle() }
 
         setupStatusItem()
 
