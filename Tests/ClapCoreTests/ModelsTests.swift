@@ -24,6 +24,11 @@ func modelsTests() {
         expectEqual(ContentHasher.hash("abc").count, 64, "sha256 hex length")
     }
 
+    test("content hash is standard SHA-256 (dedup compatibility)") {
+        expectEqual(ContentHasher.hash("text:hello"),
+            "eadf732aba96d643feaa39909a300bc8a25b15fabdf41bf20819b8ce8fd3746f")
+    }
+
     test("relative time buckets") {
         let now = Date()
         expectEqual(relativeTimeString(from: now, now: now), "now")
