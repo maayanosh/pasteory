@@ -1,18 +1,21 @@
 import Foundation
-import Combine
+import Observation
 
+@Observable
 @MainActor
-public final class Store: ObservableObject {
-    @Published public private(set) var items: [ClipItem] = []
-    @Published public private(set) var pinboards: [Pinboard] = []
+public final class Store {
+    public private(set) var items: [ClipItem] = []
+    public private(set) var pinboards: [Pinboard] = []
 
     public var historyLimit: Int = 500 {
         didSet { enforceLimit(); scheduleSave() }
     }
 
+    @ObservationIgnored
     public let directory: URL
     public var contentDir: URL { directory.appendingPathComponent("content") }
     private var storeFile: URL { directory.appendingPathComponent("store.json") }
+    @ObservationIgnored
     private var saveWorkItem: DispatchWorkItem?
 
     struct Snapshot: Codable {
@@ -104,7 +107,7 @@ public final class Store: ObservableObject {
 
     @discardableResult
     public func addPinboard(name: String) -> Pinboard {
-        let hex = AppColors.palette[pinboards.count % AppColors.palette.count]
+        let hex = Palette.palette[pinboards.count % Palette.palette.count]
         let board = Pinboard(name: name, colorHex: hex)
         pinboards.append(board)
         scheduleSave()

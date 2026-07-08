@@ -2,13 +2,13 @@ import SwiftUI
 
 /// Quick Look-style large preview shown over the card row (Space toggles).
 struct PreviewPopover: View {
-    @EnvironmentObject var state: AppState
+    @Environment(AppState.self) private var state
     let item: ClipItem
 
     var body: some View {
         ZStack {
             Color.black.opacity(0.35)
-                .onTapGesture { state.previewItem = nil }
+                .onTapGesture { state.selection.previewItem = nil }
             content
                 .frame(maxWidth: 700, maxHeight: 300)
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))

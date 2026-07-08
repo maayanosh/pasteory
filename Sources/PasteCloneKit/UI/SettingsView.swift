@@ -2,8 +2,8 @@ import SwiftUI
 import AppKit
 
 struct SettingsView: View {
-    @ObservedObject var settings: Settings
-    @ObservedObject var store: Store
+    @Bindable var settings: Settings
+    @Bindable var store: Store
 
     var body: some View {
         Form {

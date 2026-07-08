@@ -52,7 +52,8 @@ struct TestRunner {
     static func main() {
         print("PasteClone test suite\n")
         print("ModelsTests");    modelsTests()
-        print("AppColorsTests"); appColorsTests()
+        print("SHA256Tests");    sha256Tests()
+        print("AppColorsTests"); paletteTests()
         print("StoreTests");     storeTests()
         print("FilterTests");    filterTests()
         print("")

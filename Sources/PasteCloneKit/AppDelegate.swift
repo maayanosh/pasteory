@@ -17,20 +17,20 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
-        settings = Settings()
+        settings = Settings(loginController: MacLaunchAtLogin())
         store = Store()
         store.historyLimit = settings.historyLimit
-        appState = AppState(store: store, settings: settings)
         monitor = ClipboardMonitor(store: store, settings: settings)
+        monitor.onCapture = { [weak self] item in self?.store.insert(item) }
         pasteService = PasteService(store: store, monitor: monitor)
-        appState.pasteService = pasteService
+        appState = AppState(store: store, settings: settings, paster: pasteService)
         panelController = PanelController(appState: appState, pasteService: pasteService)
         settingsController = SettingsWindowController(settings: settings, store: store)
 
         monitor.start()
 
         hotKey = HotKey() // ⇧⌘V
-        hotKey.handler = { [weak self] in self?.panelController.toggle() }
+        hotKey.register { [weak self] in self?.panelController.toggle() }
 
         setupStatusItem()
 

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct CardView: View {
-    @EnvironmentObject var state: AppState
+    @Environment(AppState.self) private var state
     let item: ClipItem
     let isSelected: Bool
     let quickPasteNumber: Int?
@@ -254,9 +254,9 @@ struct CardView: View {
 
     @ViewBuilder
     private var contextMenu: some View {
-        Button("Paste") { state.pasteService.paste(item) }
-        Button("Paste as Plain Text") { state.pasteService.paste(item, plainText: true) }
-        Button("Copy") { state.pasteService.copy(item) }
+        Button("Paste") { state.selection.paste(item) }
+        Button("Paste as Plain Text") { state.selection.paste(item, plainText: true) }
+        Button("Copy") { state.selection.copy(item) }
         Divider()
         Button("Rename…") {
             if let name = promptForText(title: "Rename Item",

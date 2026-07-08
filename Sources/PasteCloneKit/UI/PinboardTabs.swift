@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PinboardTabs: View {
-    @EnvironmentObject var state: AppState
+    @Environment(AppState.self) private var state
 
     var body: some View {
         HStack(spacing: 4) {
@@ -11,7 +11,7 @@ struct PinboardTabs: View {
                     .contextMenu {
                         Button("Rename…") { rename(board) }
                         Button("Delete Pinboard", role: .destructive) {
-                            if state.selectedTab == board.id { state.selectedTab = nil }
+                            if state.selection.selectedTab == board.id { state.selection.selectedTab = nil }
                             state.store.deletePinboard(board.id)
                         }
                     }
@@ -30,10 +30,10 @@ struct PinboardTabs: View {
     }
 
     private func tab(title: String, color: Color?, id: UUID?) -> some View {
-        let selected = state.selectedTab == id
+        let selected = state.selection.selectedTab == id
         return Button {
-            state.selectedTab = id
-            state.ensureSelectionValid()
+            state.selection.selectedTab = id
+            state.selection.ensureSelectionValid()
         } label: {
             HStack(spacing: 5) {
                 if let color {
@@ -72,8 +72,8 @@ func createPinboardInteractively(state: AppState) {
                                 message: "Name your pinboard:",
                                 defaultValue: "Pinboard \(state.store.pinboards.count + 1)") {
         let board = state.store.addPinboard(name: name)
-        state.selectedTab = board.id
-        state.ensureSelectionValid()
+        state.selection.selectedTab = board.id
+        state.selection.ensureSelectionValid()
     }
 }
 

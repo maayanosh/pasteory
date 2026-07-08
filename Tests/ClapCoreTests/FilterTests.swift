@@ -12,31 +12,31 @@ func filterTests() {
     test("empty query returns items for the active tab only") {
         let board = UUID()
         let items = [item("a"), item("b", pinboardID: board)]
-        expectEqual(AppState.filter(items: items, tab: nil, query: "").compactMap(\.text), ["a"])
-        expectEqual(AppState.filter(items: items, tab: board, query: "").compactMap(\.text), ["b"])
+        expectEqual(SelectionState.filter(items: items, tab: nil, query: "").compactMap(\.text), ["a"])
+        expectEqual(SelectionState.filter(items: items, tab: board, query: "").compactMap(\.text), ["b"])
     }
 
     test("query matches text, case-insensitive") {
         let items = [item("Hello World"), item("goodbye")]
-        expectEqual(AppState.filter(items: items, tab: nil, query: "hello").compactMap(\.text),
+        expectEqual(SelectionState.filter(items: items, tab: nil, query: "hello").compactMap(\.text),
                     ["Hello World"])
     }
 
     test("query matches source app name") {
         let items = [item("xyz", app: "Safari"), item("abc", app: "Terminal")]
-        expectEqual(AppState.filter(items: items, tab: nil, query: "safari").compactMap(\.text),
+        expectEqual(SelectionState.filter(items: items, tab: nil, query: "safari").compactMap(\.text),
                     ["xyz"])
     }
 
     test("query matches kind") {
         let items = [item("https://x.co", kind: .link), item("plain")]
-        expectEqual(AppState.filter(items: items, tab: nil, query: "link").compactMap(\.text),
+        expectEqual(SelectionState.filter(items: items, tab: nil, query: "link").compactMap(\.text),
                     ["https://x.co"])
     }
 
     test("no matches yields empty") {
         let items = [item("aaa"), item("bbb")]
-        expect(AppState.filter(items: items, tab: nil, query: "zzz").isEmpty)
+        expect(SelectionState.filter(items: items, tab: nil, query: "zzz").isEmpty)
     }
 
     test("selection movement clamps at both ends") {
@@ -44,10 +44,7 @@ func filterTests() {
             .appendingPathComponent("PasteCloneTests-sel-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: dir) }
         let store = Store(directory: dir)
-        guard let defaults = UserDefaults(suiteName: "test-\(UUID())") else {
-            return expect(false, "no defaults suite")
-        }
-        let state = AppState(store: store, settings: Settings(defaults: defaults))
+        let state = SelectionState(store: store)
         for i in 1...3 {
             store.insert(ClipItem(kind: .text, text: "i\(i)",
                                   contentHash: ContentHasher.hash("i\(i)")))
@@ -69,10 +66,7 @@ func filterTests() {
             .appendingPathComponent("PasteCloneTests-stale-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: dir) }
         let store = Store(directory: dir)
-        guard let defaults = UserDefaults(suiteName: "test-\(UUID())") else {
-            return expect(false, "no defaults suite")
-        }
-        let state = AppState(store: store, settings: Settings(defaults: defaults))
+        let state = SelectionState(store: store)
         for i in 1...3 {
             store.insert(ClipItem(kind: .text, text: "i\(i)",
                                   contentHash: ContentHasher.hash("i\(i)")))
@@ -89,10 +83,7 @@ func filterTests() {
             .appendingPathComponent("PasteCloneTests-multisel-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: dir) }
         let store = Store(directory: dir)
-        guard let defaults = UserDefaults(suiteName: "test-\(UUID())") else {
-            return expect(false, "no defaults suite")
-        }
-        let state = AppState(store: store, settings: Settings(defaults: defaults))
+        let state = SelectionState(store: store)
         for i in 1...3 {
             store.insert(ClipItem(kind: .text, text: "i\(i)",
                                   contentHash: ContentHasher.hash("i\(i)")))
@@ -116,10 +107,7 @@ func filterTests() {
             .appendingPathComponent("PasteCloneTests-multisel2-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: dir) }
         let store = Store(directory: dir)
-        guard let defaults = UserDefaults(suiteName: "test-\(UUID())") else {
-            return expect(false, "no defaults suite")
-        }
-        let state = AppState(store: store, settings: Settings(defaults: defaults))
+        let state = SelectionState(store: store)
         store.insert(ClipItem(kind: .text, text: "apple", contentHash: ContentHasher.hash("apple")))
         store.insert(ClipItem(kind: .text, text: "banana", contentHash: ContentHasher.hash("banana")))
         state.panelDidShow()

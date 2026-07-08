@@ -6,26 +6,36 @@
 # by renaming it to module.modulemap.bak.)
 
 SWIFTC = swiftc
+CORE_SRC := $(shell find Sources/ClapCore -name '*.swift')
 KIT_SRC := $(shell find Sources/PasteCloneKit -name '*.swift')
 TEST_SRC := $(shell find Tests/PasteCloneKitTests -name '*.swift')
+CORE_TEST_SRC := $(shell find Tests/ClapCoreTests -name '*.swift' 2>/dev/null)
 APP = build/Clap.app
 ICONSET = build/AppIcon.iconset
 
 all: bundle
 
-build/PasteClone: $(KIT_SRC) Sources/PasteClone/main.swift
+build/PasteClone: $(CORE_SRC) $(KIT_SRC) Sources/PasteClone/main.swift
 	mkdir -p build
 	$(SWIFTC) -O -swift-version 5 -module-name PasteClone \
-	  $(KIT_SRC) Sources/PasteClone/main.swift -o build/PasteClone
+	  $(CORE_SRC) $(KIT_SRC) Sources/PasteClone/main.swift -o build/PasteClone
 
 build: build/PasteClone
 
-build/PasteCloneTests: $(KIT_SRC) $(TEST_SRC)
+build/PasteCloneTests: $(CORE_SRC) $(KIT_SRC) $(CORE_TEST_SRC) $(TEST_SRC)
 	mkdir -p build
 	$(SWIFTC) -swift-version 5 -parse-as-library -module-name PasteCloneTests \
-	  $(KIT_SRC) $(TEST_SRC) -o build/PasteCloneTests
+	  $(CORE_SRC) $(KIT_SRC) $(CORE_TEST_SRC) $(TEST_SRC) -o build/PasteCloneTests
 
-test: build/PasteCloneTests
+# Enforces core purity: SwiftPM is broken locally and the Makefile compiles
+# everything as one module, so the compiler can't catch a forbidden import
+# inside ClapCore. This grep guard does.
+check-core:
+	@! grep -REn 'import (AppKit|SwiftUI|Combine|Carbon|ServiceManagement|CryptoKit)' Sources/ClapCore \
+	  || (echo "ERROR: forbidden import in Sources/ClapCore (see above)"; exit 1)
+	@echo "core boundary OK"
+
+test: check-core build/PasteCloneTests
 	./build/PasteCloneTests
 
 bundle: build/PasteClone

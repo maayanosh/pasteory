@@ -1,12 +1,20 @@
 import AppKit
 import Carbon.HIToolbox
+#if canImport(ClapCore)
+import ClapCore
+#endif
 
 /// Global hotkey via legacy Carbon RegisterEventHotKey — works without any
 /// privacy permissions, unlike NSEvent global monitors.
-public final class HotKey {
+@MainActor
+public final class HotKey: GlobalHotKey {
     private var hotKeyRef: EventHotKeyRef?
     private var eventHandler: EventHandlerRef?
     public var handler: (() -> Void)?
+
+    public func register(_ handler: @escaping () -> Void) {
+        self.handler = handler
+    }
 
     public init(keyCode: UInt32 = UInt32(kVK_ANSI_V),
                 modifiers: UInt32 = UInt32(cmdKey | shiftKey)) {

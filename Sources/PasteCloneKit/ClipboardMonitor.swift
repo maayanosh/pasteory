@@ -1,12 +1,16 @@
 import AppKit
+#if canImport(ClapCore)
+import ClapCore
+#endif
 
 @MainActor
-public final class ClipboardMonitor {
+public final class ClipboardMonitor: ClipboardSource {
     private var timer: Timer?
     private var lastChangeCount: Int
     /// Set by PasteService right after it writes to the pasteboard so we don't
     /// recapture our own paste.
     public var expectedChangeCount: Int = -1
+    public var onCapture: ((ClipItem) -> Void)?
 
     private let store: Store
     private let settings: Settings
@@ -51,7 +55,7 @@ public final class ClipboardMonitor {
         if let bid = front?.bundleIdentifier, settings.excludedBundleIDs.contains(bid) { return }
 
         guard let item = buildItem(from: pb, sourceApp: front) else { return }
-        store.insert(item)
+        onCapture?(item)
     }
 
     private func buildItem(from pb: NSPasteboard, sourceApp: NSRunningApplication?) -> ClipItem? {

@@ -1,7 +1,10 @@
 import AppKit
+#if canImport(ClapCore)
+import ClapCore
+#endif
 
 @MainActor
-public final class PasteService {
+public final class PasteService: Paster {
     private let store: Store
     private let monitor: ClipboardMonitor
     /// The app that was frontmost before the panel opened; set by PanelController.
