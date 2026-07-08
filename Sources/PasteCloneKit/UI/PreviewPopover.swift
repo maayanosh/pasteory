@@ -8,7 +8,7 @@ struct PreviewPopover: View {
     var body: some View {
         ZStack {
             Color.black.opacity(0.35)
-                .onTapGesture { state.previewItem = nil }
+                .onTapGesture { state.selection.previewItem = nil }
             content
                 .frame(maxWidth: 700, maxHeight: 300)
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))

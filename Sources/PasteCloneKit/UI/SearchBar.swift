@@ -10,17 +10,17 @@ struct SearchBar: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
-            TextField("Search", text: $state.query)
+            TextField("Search", text: $state.selection.query)
                 .textFieldStyle(.plain)
                 .font(.system(size: 13))
                 .focused($focused)
-                .onChange(of: state.query) { _, _ in
-                    state.ensureSelectionValid()
+                .onChange(of: state.selection.query) { _, _ in
+                    state.selection.ensureSelectionValid()
                 }
-            if !state.query.isEmpty {
+            if !state.selection.query.isEmpty {
                 Button {
-                    state.query = ""
-                    state.searchFocused = false
+                    state.selection.query = ""
+                    state.selection.searchFocused = false
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 12))
@@ -30,7 +30,7 @@ struct SearchBar: View {
             }
         }
         .padding(.horizontal, 10)
-        .frame(width: focused || !state.query.isEmpty ? 280 : 220, height: 30)
+        .frame(width: focused || !state.selection.query.isEmpty ? 280 : 220, height: 30)
         .background(.black.opacity(0.25), in: RoundedRectangle(cornerRadius: 8))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
@@ -41,9 +41,9 @@ struct SearchBar: View {
         // Two-way sync between SwiftUI focus and the AppState flag the
         // keyboard handler in PanelController relies on.
         .onChange(of: focused) { _, now in
-            if state.searchFocused != now { state.searchFocused = now }
+            if state.selection.searchFocused != now { state.selection.searchFocused = now }
         }
-        .onChange(of: state.searchFocused) { _, now in
+        .onChange(of: state.selection.searchFocused) { _, now in
             if focused != now { focused = now }
         }
     }

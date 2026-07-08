@@ -20,10 +20,9 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         settings = Settings(loginController: MacLaunchAtLogin())
         store = Store()
         store.historyLimit = settings.historyLimit
-        appState = AppState(store: store, settings: settings)
         monitor = ClipboardMonitor(store: store, settings: settings)
         pasteService = PasteService(store: store, monitor: monitor)
-        appState.pasteService = pasteService
+        appState = AppState(store: store, settings: settings, paster: pasteService)
         panelController = PanelController(appState: appState, pasteService: pasteService)
         settingsController = SettingsWindowController(settings: settings, store: store)
 

@@ -12,7 +12,7 @@ public struct PanelRootView: View {
                 header
                 cardRow
             }
-            if let item = state.previewItem {
+            if let item = state.selection.previewItem {
                 PreviewPopover(item: item)
                     .transition(.opacity.combined(with: .scale(scale: 0.96)))
             }
@@ -24,7 +24,7 @@ public struct PanelRootView: View {
             UnevenRoundedRectangle(topLeadingRadius: 16, topTrailingRadius: 16)
                 .stroke(Color.white.opacity(0.1), lineWidth: 1)
         }
-        .animation(.easeOut(duration: 0.15), value: state.previewItem)
+        .animation(.easeOut(duration: 0.15), value: state.selection.previewItem)
         .environment(\.colorScheme, .dark) // Paste's panel reads dark over any wallpaper
     }
 
@@ -51,25 +51,25 @@ public struct PanelRootView: View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: 12) {
-                    let items = state.filteredItems
+                    let items = state.selection.filteredItems
                     if items.isEmpty {
                         emptyState
                     }
                     ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                         CardView(
                             item: item,
-                            isSelected: item.id == state.selectionID || state.multiSelection.contains(item.id),
-                            quickPasteNumber: state.showNumbers && index < 9 ? index + 1 : nil
+                            isSelected: item.id == state.selection.selectionID || state.selection.multiSelection.contains(item.id),
+                            quickPasteNumber: state.selection.showNumbers && index < 9 ? index + 1 : nil
                         )
                         .id(item.id)
-                        .onTapGesture(count: 2) { state.pasteService.paste(item) }
+                        .onTapGesture(count: 2) { state.selection.paste(item) }
                         .onTapGesture {
                             if NSEvent.modifierFlags.contains(.command) {
-                                state.toggleMultiSelect(item.id)
-                                state.selectionID = item.id
+                                state.selection.toggleMultiSelect(item.id)
+                                state.selection.selectionID = item.id
                             } else {
-                                state.clearMultiSelection()
-                                state.selectionID = item.id
+                                state.selection.clearMultiSelection()
+                                state.selection.selectionID = item.id
                             }
                         }
                     }
@@ -78,7 +78,7 @@ public struct PanelRootView: View {
                 .padding(.bottom, 16)
                 .padding(.top, 4)
             }
-            .onChange(of: state.selectionID) { _, id in
+            .onChange(of: state.selection.selectionID) { _, id in
                 if let id {
                     withAnimation(.easeOut(duration: 0.15)) {
                         proxy.scrollTo(id, anchor: .center)
@@ -93,10 +93,10 @@ public struct PanelRootView: View {
             Image(systemName: "doc.on.clipboard")
                 .font(.system(size: 32))
                 .foregroundStyle(.secondary)
-            Text(state.query.isEmpty ? "Nothing here yet — copy something!" : "No results")
+            Text(state.selection.query.isEmpty ? "Nothing here yet — copy something!" : "No results")
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
-            if state.query.isEmpty {
+            if state.selection.query.isEmpty {
                 Text("Open this panel anytime with ⇧⌘V")
                     .font(.system(size: 11))
                     .foregroundStyle(.tertiary)

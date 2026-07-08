@@ -60,7 +60,7 @@ public final class PanelController {
         guard let screen else { return }
 
         pasteService.previousApp = NSWorkspace.shared.frontmostApplication
-        appState.panelDidShow()
+        appState.selection.panelDidShow()
 
         let target = NSRect(
             x: screen.frame.minX,
@@ -84,7 +84,7 @@ public final class PanelController {
         DispatchQueue.main.async { [weak self] in
             guard let self, self.isVisible else { return }
             self.panel.makeFirstResponder(nil)
-            self.appState.searchFocused = false
+            self.appState.selection.searchFocused = false
         }
 
         NSAnimationContext.runAnimationGroup { ctx in
@@ -101,8 +101,8 @@ public final class PanelController {
         guard isVisible else { return }
         isVisible = false
         removeMonitors()
-        appState.previewItem = nil
-        appState.showNumbers = false
+        appState.selection.previewItem = nil
+        appState.selection.showNumbers = false
         // Flush any debounced writes now rather than risk losing the last
         // mutation if the app is force-quit before the 0.5s save timer fires.
         appState.store.saveNow()
@@ -131,7 +131,7 @@ public final class PanelController {
             return self.handleKey(event)
         }
         flagsMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
-            self?.appState.showNumbers = event.modifierFlags.contains(.command)
+            self?.appState.selection.showNumbers = event.modifierFlags.contains(.command)
             return event
         }
         // Global monitor only fires for OTHER apps' clicks — i.e. outside the panel.
@@ -150,7 +150,7 @@ public final class PanelController {
             // preview's vertical text scroller and other windows (Settings)
             // alone.
             guard let self, event.window === self.panel,
-                  self.appState.previewItem == nil
+                  self.appState.selection.previewItem == nil
             else { return event }
             return horizontalizedWheelEvent(event) ?? event
         }
@@ -175,7 +175,7 @@ public final class PanelController {
         // its keystrokes.
         guard panel.isKeyWindow else { return event }
 
-        let state = appState
+        let state = appState.selection
         let mods = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         let hasCmd = mods.contains(.command)
 
@@ -189,7 +189,7 @@ public final class PanelController {
         // ⇧⌘N new pinboard
         if hasCmd, mods.contains(.shift),
            event.charactersIgnoringModifiers?.lowercased() == "n" {
-            createPinboardInteractively(state: state)
+            createPinboardInteractively(state: appState)
             return nil
         }
         // ⌘F focus search
