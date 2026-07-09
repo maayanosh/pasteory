@@ -146,7 +146,24 @@ public final class Store: ObservableObject {
         }
     }
 
+    public func totalDataSize() -> Int64 {
+        var total: Int64 = 0
+        let fm = FileManager.default
+        if let size = try? storeFile.resourceValues(forKeys: [.fileSizeKey]).fileSize {
+            total += Int64(size)
+        }
+        if let enumerator = fm.enumerator(at: contentDir, includingPropertiesForKeys: [.fileSizeKey]) {
+            for case let url as URL in enumerator {
+                if let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize {
+                    total += Int64(size)
+                }
+            }
+        }
+        return total
+    }
+
     private func enforceLimit() {
+        guard historyLimit != .max else { return }
         var historyCount = items.filter { $0.pinboardID == nil }.count
         guard historyCount > historyLimit else { return }
         // Walk from the back (oldest) evicting unpinned items.

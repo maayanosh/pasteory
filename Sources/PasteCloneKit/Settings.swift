@@ -26,16 +26,22 @@ public final class Settings: ObservableObject {
     @Published public var panelOpacity: Double {
         didSet { defaults.set(panelOpacity, forKey: "panelOpacity") }
     }
+    /// When true, pressing Enter on a selected card also synthesizes ⌘V into
+    /// the previous app instead of only copying to the clipboard.
+    @Published public var pasteOnEnter: Bool {
+        didSet { defaults.set(pasteOnEnter, forKey: "pasteOnEnter") }
+    }
 
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         self.isPaused = defaults.bool(forKey: "isPaused")
         self.excludedBundleIDs = defaults.stringArray(forKey: "excludedBundleIDs") ?? []
         let limit = defaults.integer(forKey: "historyLimit")
-        self.historyLimit = limit == 0 ? 500 : limit
+        self.historyLimit = limit == 0 ? 500 : limit  // 0 = never saved → default 500; Int.max = Forever
         self.launchAtLogin = defaults.bool(forKey: "launchAtLogin")
         let opacity = defaults.double(forKey: "panelOpacity")
         self.panelOpacity = opacity == 0 ? 0.85 : min(max(opacity, 0.3), 1.0)
+        self.pasteOnEnter = defaults.bool(forKey: "pasteOnEnter")
     }
 
     private func applyLaunchAtLogin() {

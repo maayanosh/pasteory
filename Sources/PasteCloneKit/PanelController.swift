@@ -59,7 +59,6 @@ public final class PanelController {
         let screen = screenWithMouse() ?? NSScreen.main
         guard let screen else { return }
 
-        pasteService.previousApp = NSWorkspace.shared.frontmostApplication
         appState.panelDidShow()
 
         let target = NSRect(
@@ -197,6 +196,11 @@ public final class PanelController {
             state.searchFocused = true
             return nil
         }
+        // ⌘A select all in the search field
+        if hasCmd, event.charactersIgnoringModifiers?.lowercased() == "a", state.searchFocused {
+            (panel.firstResponder as? NSTextView)?.selectAll(nil)
+            return nil
+        }
         // ⌘C copy selected (only while browsing cards)
         if hasCmd, event.charactersIgnoringModifiers == "c", !state.searchFocused {
             state.copySelected()
@@ -228,8 +232,11 @@ public final class PanelController {
         case 36: // Return
             if !state.multiSelection.isEmpty {
                 state.pasteMultiSelection(plainText: mods.contains(.shift))
-            } else {
+            } else if state.settings.pasteOnEnter {
                 state.pasteSelected(plainText: mods.contains(.shift))
+            } else {
+                state.copySelected()
+                hidePanel()
             }
             return nil
         case 123: // ←
