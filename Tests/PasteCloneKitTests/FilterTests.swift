@@ -7,6 +7,13 @@ private func item(_ text: String, app: String? = nil, kind: ClipKind = .text,
              contentHash: ContentHasher.hash(text))
 }
 
+/// Inert PasteActions so AppState can be exercised without the real
+/// pasteboard or Accessibility APIs.
+private final class PasteActionsStub: PasteActions {
+    func paste(_ item: ClipItem, plainText: Bool, completion: (() -> Void)?) { completion?() }
+    func copy(_ item: ClipItem) {}
+}
+
 @MainActor
 func filterTests() {
     test("empty query returns items for the active tab only") {
@@ -47,7 +54,8 @@ func filterTests() {
         guard let defaults = UserDefaults(suiteName: "test-\(UUID())") else {
             return expect(false, "no defaults suite")
         }
-        let state = AppState(store: store, settings: Settings(defaults: defaults))
+        let state = AppState(store: store, settings: Settings(defaults: defaults),
+                             pasteService: PasteActionsStub())
         for i in 1...3 {
             store.insert(ClipItem(kind: .text, text: "i\(i)",
                                   contentHash: ContentHasher.hash("i\(i)")))
@@ -72,7 +80,8 @@ func filterTests() {
         guard let defaults = UserDefaults(suiteName: "test-\(UUID())") else {
             return expect(false, "no defaults suite")
         }
-        let state = AppState(store: store, settings: Settings(defaults: defaults))
+        let state = AppState(store: store, settings: Settings(defaults: defaults),
+                             pasteService: PasteActionsStub())
         for i in 1...3 {
             store.insert(ClipItem(kind: .text, text: "i\(i)",
                                   contentHash: ContentHasher.hash("i\(i)")))
@@ -92,7 +101,8 @@ func filterTests() {
         guard let defaults = UserDefaults(suiteName: "test-\(UUID())") else {
             return expect(false, "no defaults suite")
         }
-        let state = AppState(store: store, settings: Settings(defaults: defaults))
+        let state = AppState(store: store, settings: Settings(defaults: defaults),
+                             pasteService: PasteActionsStub())
         for i in 1...3 {
             store.insert(ClipItem(kind: .text, text: "i\(i)",
                                   contentHash: ContentHasher.hash("i\(i)")))
@@ -119,7 +129,8 @@ func filterTests() {
         guard let defaults = UserDefaults(suiteName: "test-\(UUID())") else {
             return expect(false, "no defaults suite")
         }
-        let state = AppState(store: store, settings: Settings(defaults: defaults))
+        let state = AppState(store: store, settings: Settings(defaults: defaults),
+                             pasteService: PasteActionsStub())
         store.insert(ClipItem(kind: .text, text: "apple", contentHash: ContentHasher.hash("apple")))
         store.insert(ClipItem(kind: .text, text: "banana", contentHash: ContentHasher.hash("banana")))
         state.panelDidShow()

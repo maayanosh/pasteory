@@ -25,8 +25,10 @@ public final class PanelController {
         self.appState = appState
         self.pasteService = pasteService
 
+        // Nominal rect only — showPanel() replaces it with the target
+        // screen's full width every time.
         panel = KeyablePanel(
-            contentRect: NSRect(x: 0, y: 0, width: 1200, height: Self.panelHeight),
+            contentRect: NSRect(x: 0, y: 0, width: 800, height: Self.panelHeight),
             styleMask: [.nonactivatingPanel, .borderless, .fullSizeContentView],
             backing: .buffered,
             defer: false
@@ -102,8 +104,10 @@ public final class PanelController {
         removeMonitors()
         appState.previewItem = nil
         appState.showNumbers = false
-        // Flush any debounced writes now rather than risk losing the last
-        // mutation if the app is force-quit before the 0.5s save timer fires.
+        // Kick off a save now rather than risk losing the last mutation if
+        // the app is force-quit before the 0.5s debounce fires. The write
+        // itself happens on a background queue, so it can't hitch the hide
+        // animation below.
         appState.store.saveNow()
 
         var down = panel.frame

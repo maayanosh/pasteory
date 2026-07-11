@@ -10,6 +10,33 @@ mutations) is unit-tested. The issues below are ordered by severity: first
 things that lose data or freeze the UI, then robustness/design problems, then
 structure and package layout improvements.
 
+## Status — implemented on this branch
+
+Fixed by the commits following this document:
+
+- §1.1 versioned snapshot; background, logged saves; `flush()` on quit
+- §1.2 image capture moved off the main thread onto ImageIO
+- §1.3 startup sweep of orphaned content files
+- §1.4 activation-confirmed ⌘V with timeout fallback; completion-chained multi-paste
+- §1.5 `byteSize` captured on the model; cached file icons; async Settings data size
+- §1.6 `historyLimit` owned by Settings, synced via one subscription
+- §2.1 `PasteActions` protocol injection + `AppComposition` root
+- §2.2 cached `filteredItems`
+- §2.3 `PasteboardReading` seam + ClipboardMonitor test suite
+- §2.4 `-strict-concurrency=complete` in the Makefile (§3.2 partially: CI workflow added,
+  driving the Makefile build since `swift test` can't run the custom harness)
+- §2.5 `files: [String]` stored on new items, legacy `text` form still decoded
+- §2.6 dedup refreshes source-app metadata
+- §2.7 `0700` data directory; atomic content-file writes
+- §2.8 `UTType` instead of `UTTypeConformsTo`
+- §3.4 shared `formatByteSize` + readable-text-color helpers
+- Smaller items: timestamped corrupt backups, first-unused pinboard color,
+  Settings sentinel reads, previews via `ImageCache`
+
+Still open (deliberately deferred): §3.1 target split, SQLite storage (§1.1
+long-term), §3.3 naming centralization, `looksLikeCode` tuning (its current
+behavior is pinned by tests), Info.plist version stamping.
+
 ---
 
 ## 1. High severity — data integrity & responsiveness

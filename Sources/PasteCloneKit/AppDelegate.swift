@@ -2,35 +2,23 @@ import AppKit
 
 @MainActor
 public final class AppDelegate: NSObject, NSApplicationDelegate {
-    var settings: Settings!
-    var store: Store!
-    var appState: AppState!
-    var monitor: ClipboardMonitor!
-    var pasteService: PasteService!
-    var panelController: PanelController!
-    var settingsController: SettingsWindowController!
-    var hotKey: HotKey!
-    var statusItem: NSStatusItem!
+    // The one lifecycle-imposed late-init left: NSApplicationDelegate can't
+    // build UI-adjacent objects until the app has finished launching. All
+    // downstream wiring is compiler-checked inside AppComposition.
+    private var composition: AppComposition!
+    private var hotKey: HotKey!
+    private var statusItem: NSStatusItem!
 
     public nonisolated override init() {
         super.init()
     }
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
-        settings = Settings()
-        store = Store()
-        store.historyLimit = settings.historyLimit
-        appState = AppState(store: store, settings: settings)
-        monitor = ClipboardMonitor(store: store, settings: settings)
-        pasteService = PasteService(store: store, monitor: monitor)
-        appState.pasteService = pasteService
-        panelController = PanelController(appState: appState, pasteService: pasteService)
-        settingsController = SettingsWindowController(settings: settings, store: store)
-
-        monitor.start()
+        composition = AppComposition()
+        composition.monitor.start()
 
         hotKey = HotKey() // ⇧⌘V
-        hotKey.handler = { [weak self] in self?.panelController.toggle() }
+        hotKey.handler = { [weak self] in self?.composition.panelController.toggle() }
 
         setupStatusItem()
 
@@ -40,7 +28,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         if !defaults.bool(forKey: "hasShownWelcome") {
             defaults.set(true, forKey: "hasShownWelcome")
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
-                self?.panelController.showPanel()
+                self?.composition.panelController.showPanel()
             }
         }
 
@@ -48,13 +36,14 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         // (used by automated verification).
         if ProcessInfo.processInfo.environment["PASTECLONE_SHOW_ON_LAUNCH"] == "1" {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-                self?.panelController.showPanel()
+                self?.composition.panelController.showPanel()
             }
         }
     }
 
     public func applicationWillTerminate(_ notification: Notification) {
-        store.saveNow()
+        composition.store.saveNow()
+        composition.store.flush()
     }
 
     private func setupStatusItem() {
@@ -92,25 +81,25 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func openPanel() {
-        panelController.showPanel()
+        composition.panelController.showPanel()
     }
 
     @objc private func togglePause() {
-        settings.isPaused.toggle()
+        composition.settings.isPaused.toggle()
     }
 
     @objc private func openSettings() {
-        settingsController.show()
+        composition.settingsController.show()
     }
 
     @objc private func clearHistory() {
-        store.clearHistory()
+        composition.store.clearHistory()
     }
 }
 
 extension AppDelegate: NSMenuDelegate {
     public func menuNeedsUpdate(_ menu: NSMenu) {
         menu.items.first { $0.action == #selector(togglePause) }?
-            .title = settings.isPaused ? "Resume Capturing" : "Pause Capturing"
+            .title = composition.settings.isPaused ? "Resume Capturing" : "Pause Capturing"
     }
 }

@@ -56,6 +56,11 @@ public enum AppColors {
         return 0.299 * r + 0.587 * g + 0.114 * b
     }
 
+    /// Readable overlay text color for a hex background.
+    public static func readableTextColor(onHex hex: String) -> Color {
+        luminance(ofHex: hex) > 0.6 ? .black : .white
+    }
+
     static func rgb(fromHex hex: String) -> (Double, Double, Double) {
         var s = hex.trimmingCharacters(in: .whitespaces)
         if s.hasPrefix("#") { s.removeFirst() }
@@ -72,5 +77,12 @@ public extension Color {
     init(hex: String) {
         let (r, g, b) = AppColors.rgb(fromHex: hex)
         self.init(red: r, green: g, blue: b)
+    }
+}
+
+public extension ParsedColor {
+    /// Readable overlay text color on top of this color (swatch cards).
+    var readableTextColor: Color {
+        luminance > 0.6 ? .black : .white
     }
 }

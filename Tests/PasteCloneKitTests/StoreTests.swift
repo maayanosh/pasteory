@@ -115,12 +115,34 @@ func storeTests() {
         }
         store.setPinboard(itemID, to: board.id)
         store.saveNow()
+        store.flush() // saves are async; wait for the bytes before reloading
 
         let reloaded = Store(directory: dir)
         expectEqual(reloaded.items.count, 1)
         expectEqual(reloaded.items.first?.text, "hello")
         expectEqual(reloaded.items.first?.pinboardID, board.id)
         expectEqual(reloaded.pinboards.map(\.name), ["Snips"])
+    }
+
+    test("loads a legacy store.json without a version field") {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("PasteCloneTests-legacy-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        // Shape written by pre-versioned builds: no "version", no "files",
+        // no "byteSize". Dates encode as secondsSinceReferenceDate.
+        let json = """
+        {"items":[{"id":"\(UUID().uuidString)","kind":"text","text":"old",\
+        "createdAt":0,"contentHash":"abc"}],"pinboards":[]}
+        """
+        try Data(json.utf8).write(to: dir.appendingPathComponent("store.json"))
+
+        let store = Store(directory: dir)
+        expectEqual(store.items.count, 1)
+        expectEqual(store.items.first?.text, "old")
+        let corruptBackups = (try? FileManager.default.contentsOfDirectory(atPath: dir.path))?
+            .filter { $0.hasPrefix("store.json.corrupt") } ?? []
+        expect(corruptBackups.isEmpty, "legacy file must not be treated as corrupt")
     }
 
     test("delete pinboard moves items to history") {

@@ -4,6 +4,7 @@ import AppKit
 struct SettingsView: View {
     @ObservedObject var settings: Settings
     @ObservedObject var store: Store
+    @State private var dataSize: Int64?
 
     var body: some View {
         Form {
@@ -48,25 +49,21 @@ struct SettingsView: View {
                 Button("Add App…") { addApp() }
             }
             Section("Data") {
-                LabeledContent("Cached data size", value: formatDataSize(store.totalDataSize()))
+                // Computed off the main thread on appearance — walking the
+                // whole content directory doesn't belong in a view body.
+                LabeledContent("Cached data size",
+                               value: dataSize.map(formatByteSize) ?? "Calculating…")
                 Button("Clear History", role: .destructive) {
                     store.clearHistory()
+                    Task { dataSize = await store.computeTotalDataSize() }
                 }
             }
         }
         .formStyle(.grouped)
         .frame(width: 440, height: 420)
-        .onChange(of: settings.historyLimit) { _, limit in
-            store.historyLimit = limit  // Int.max → no limit enforced
-        }
-    }
-
-    private func formatDataSize(_ bytes: Int64) -> String {
-        let units = ["bytes", "KB", "MB", "GB"]
-        var value = Double(bytes)
-        var idx = 0
-        while value >= 1024 && idx < units.count - 1 { value /= 1024; idx += 1 }
-        return idx == 0 ? "\(bytes) bytes" : String(format: "%.1f %@", value, units[idx])
+        .task { dataSize = await store.computeTotalDataSize() }
+        // settings.historyLimit no longer needs manual syncing here — the
+        // store subscribes to it via AppState (single source of truth).
     }
 
     private func addApp() {

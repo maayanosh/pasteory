@@ -3,8 +3,12 @@ import Combine
 
 @MainActor
 public final class AppState: ObservableObject {
-    @Published public var query = ""
-    @Published public var selectedTab: UUID?          // nil = History
+    @Published public var query = "" {
+        didSet { invalidateFilteredItems() }
+    }
+    @Published public var selectedTab: UUID? {          // nil = History
+        didSet { invalidateFilteredItems() }
+    }
     @Published public var selectionID: UUID?
     @Published public var multiSelection: Set<UUID> = []  // ⌘-click additions, pasted in order on Return
     @Published public var showNumbers = false         // ⌘ held → quick-paste badges
@@ -13,35 +17,62 @@ public final class AppState: ObservableObject {
 
     public let store: Store
     public let settings: Settings
-    public var pasteService: PasteService!
+    public let pasteService: PasteActions
 
     private var cancellables: Set<AnyCancellable> = []
+    private var cachedFilteredItems: [ClipItem]?
 
-    public init(store: Store, settings: Settings) {
+    public init(store: Store, settings: Settings, pasteService: PasteActions) {
         self.store = store
         self.settings = settings
-        // Re-publish store changes so SwiftUI views observing AppState refresh.
+        self.pasteService = pasteService
+        // Re-publish store changes so SwiftUI views observing AppState refresh
+        // (and drop the filter cache, since store.items is one of its inputs).
         store.objectWillChange
-            .sink { [weak self] in self?.objectWillChange.send() }
+            .sink { [weak self] in
+                self?.invalidateFilteredItems()
+                self?.objectWillChange.send()
+            }
+            .store(in: &cancellables)
+        // Single owner for the history limit: Settings persists it, the store
+        // enforces it. @Published replays the current value on subscription,
+        // so this also performs the initial sync.
+        settings.$historyLimit
+            .sink { [weak store] limit in store?.historyLimit = limit }
             .store(in: &cancellables)
     }
 
     // MARK: - Filtering (pure, unit-tested)
 
     public static func matches(_ item: ClipItem, query: String) -> Bool {
-        let q = query.lowercased()
+        matchesLowercased(item, query.lowercased())
+    }
+
+    private static func matchesLowercased(_ item: ClipItem, _ q: String) -> Bool {
         if let text = item.text, text.lowercased().contains(q) { return true }
         if let app = item.sourceAppName, app.lowercased().contains(q) { return true }
         return item.kind.rawValue.lowercased().contains(q)
     }
 
     public static func filter(items: [ClipItem], tab: UUID?, query: String) -> [ClipItem] {
-        items.filter { $0.pinboardID == tab }
-            .filter { query.isEmpty || matches($0, query: query) }
+        let q = query.lowercased()
+        return items.filter {
+            $0.pinboardID == tab && (q.isEmpty || matchesLowercased($0, q))
+        }
     }
 
+    /// Cached and recomputed only when its inputs (store items, tab, query)
+    /// change — this is read several times per keystroke, and an O(n) scan on
+    /// each read gets expensive with an unlimited ("Forever") history.
     public var filteredItems: [ClipItem] {
-        Self.filter(items: store.items, tab: selectedTab, query: query)
+        if let cached = cachedFilteredItems { return cached }
+        let computed = Self.filter(items: store.items, tab: selectedTab, query: query)
+        cachedFilteredItems = computed
+        return computed
+    }
+
+    private func invalidateFilteredItems() {
+        cachedFilteredItems = nil
     }
 
     // MARK: - Panel lifecycle
@@ -113,9 +144,10 @@ public final class AppState: ObservableObject {
         pasteService.paste(item, plainText: plainText)
     }
 
-    /// Pastes the multi-selection in order, one at a time, each after the
-    /// previous paste has had time to land. Falls back to the single
-    /// selection when nothing is multi-selected.
+    /// Pastes the multi-selection in order, one at a time — each queued off
+    /// the previous paste's completion rather than a fixed timer, so a slow
+    /// target app can't drop items. Falls back to the single selection when
+    /// nothing is multi-selected.
     public func pasteMultiSelection(plainText: Bool = false) {
         let items = orderedMultiSelection
         guard !items.isEmpty else { return pasteSelected(plainText: plainText) }
@@ -125,12 +157,11 @@ public final class AppState: ObservableObject {
 
     private func pasteSequentially(_ items: [ClipItem], index: Int, plainText: Bool) {
         guard index < items.count else { return }
-        pasteService.paste(items[index], plainText: plainText)
-        let next = index + 1
-        guard next < items.count else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
-            self?.pasteSequentially(items, index: next, plainText: plainText)
-        }
+        let isLast = index == items.count - 1
+        pasteService.paste(items[index], plainText: plainText,
+                           completion: isLast ? nil : { [weak self] in
+                               self?.pasteSequentially(items, index: index + 1, plainText: plainText)
+                           })
     }
 
     public func paste(at index: Int, plainText: Bool = false) {

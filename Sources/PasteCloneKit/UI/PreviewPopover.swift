@@ -51,7 +51,7 @@ struct PreviewPopover: View {
             .padding(24)
         case .image:
             if let file = item.imageFile,
-               let nsImage = NSImage(contentsOf: state.store.contentURL(file)) {
+               let nsImage = ImageCache.shared.image(at: state.store.contentURL(file)) {
                 Image(nsImage: nsImage)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
@@ -65,17 +65,17 @@ struct PreviewPopover: View {
                     .opacity(parsed.alpha)
                 Text((item.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines))
                     .font(.system(size: 17, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(parsed.luminance > 0.6 ? Color.black : .white)
+                    .foregroundStyle(parsed.readableTextColor)
                     .textSelection(.enabled)
             }
             .frame(width: 460, height: 280)
         case .file:
             VStack(spacing: 10) {
-                ForEach((item.text ?? "").split(separator: "\n").prefix(6), id: \.self) { path in
+                ForEach(item.filePaths.prefix(6), id: \.self) { path in
                     HStack {
-                        Image(nsImage: NSWorkspace.shared.icon(forFile: String(path)))
+                        Image(nsImage: IconCache.shared.icon(forPath: path))
                             .resizable().frame(width: 24, height: 24)
-                        Text(String(path))
+                        Text(path)
                             .font(.system(size: 12, design: .monospaced))
                             .lineLimit(1)
                             .truncationMode(.middle)
