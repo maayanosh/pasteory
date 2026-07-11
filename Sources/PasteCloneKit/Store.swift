@@ -102,7 +102,8 @@ public final class Store: ObservableObject {
     private func scheduleSave() {
         saveWorkItem?.cancel()
         let work = DispatchWorkItem { [weak self] in
-            Task { @MainActor in self?.saveNow() }
+            guard let self else { return }
+            Task { @MainActor in self.saveNow() }
         }
         saveWorkItem = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)

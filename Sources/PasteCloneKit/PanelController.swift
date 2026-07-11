@@ -117,7 +117,8 @@ public final class PanelController {
             ctx.timingFunction = CAMediaTimingFunction(name: .easeIn)
             panel.animator().setFrame(down, display: true)
         }, completionHandler: { [weak panel] in
-            Task { @MainActor in panel?.orderOut(nil) }
+            guard let panel else { return }
+            Task { @MainActor in panel.orderOut(nil) }
         })
     }
 
@@ -141,7 +142,8 @@ public final class PanelController {
         outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(
             matching: [.leftMouseDown, .rightMouseDown]
         ) { [weak self] _ in
-            Task { @MainActor in self?.hidePanel() }
+            guard let self else { return }
+            Task { @MainActor in self.hidePanel() }
         }
         // SwiftUI's ScrollView(.horizontal) only responds to trackpad
         // horizontal swipes, not a plain mouse wheel — but Paste's own

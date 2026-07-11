@@ -6,10 +6,15 @@
 # by renaming it to module.modulemap.bak.)
 
 SWIFTC = swiftc
-# The sources are annotated with @MainActor/Sendable; -strict-concurrency
-# surfaces data-race diagnostics now (still warnings, not errors, in Swift 5
-# language mode).
-SWIFT_FLAGS = -swift-version 5 -strict-concurrency=complete
+# Opt-in strict concurrency diagnostics: `make STRICT=1 …`. The sources are
+# annotated with @MainActor/Sendable; complete checking surfaces data-race
+# diagnostics as warnings on current toolchains, but some older compilers
+# (e.g. Xcode 15's Swift 5.10) escalate a few of them to errors, so it stays
+# off by default.
+SWIFT_FLAGS = -swift-version 5
+ifeq ($(STRICT),1)
+SWIFT_FLAGS += -strict-concurrency=complete
+endif
 KIT_SRC := $(shell find Sources/PasteCloneKit -name '*.swift')
 TEST_SRC := $(shell find Tests/PasteCloneKitTests -name '*.swift')
 APP = build/Clap.app

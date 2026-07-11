@@ -48,7 +48,10 @@ public final class ClipboardMonitor {
     public func start() {
         stop()
         let t = Timer(timeInterval: 0.5, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.check() }
+            // Rebind before hopping actors: a weak capture is a `var`, and
+            // referencing one inside a Sendable closure is a Swift 6 error.
+            guard let self else { return }
+            Task { @MainActor in self.check() }
         }
         RunLoop.main.add(t, forMode: .common)
         timer = t

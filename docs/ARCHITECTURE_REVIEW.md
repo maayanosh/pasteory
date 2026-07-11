@@ -23,8 +23,10 @@ Fixed by the commits following this document:
 - §2.1 `PasteActions` protocol injection + `AppComposition` root
 - §2.2 cached `filteredItems`
 - §2.3 `PasteboardReading` seam + ClipboardMonitor test suite
-- §2.4 `-strict-concurrency=complete` in the Makefile (§3.2 partially: CI workflow added,
-  driving the Makefile build since `swift test` can't run the custom harness)
+- §2.4 `-strict-concurrency=complete` opt-in via `make STRICT=1` — kept off by
+  default because Xcode 15's Swift 5.10 escalates some of its diagnostics to
+  errors (§3.2 partially: CI workflow added, driving the Makefile build since
+  `swift test` can't run the custom harness)
 - §2.5 `files: [String]` stored on new items, legacy `text` form still decoded
 - §2.6 dedup refreshes source-app metadata
 - §2.7 `0700` data directory; atomic content-file writes
