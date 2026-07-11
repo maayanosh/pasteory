@@ -49,6 +49,17 @@ bundle: build/PasteClone
 	xattr -cr $(APP)   # sips/iconutil leave xattrs codesign rejects as "detritus"
 	codesign --force --deep --sign - $(APP)
 
+# Distributable disk image: Clap.app plus an /Applications symlink for
+# drag-to-install. Ad-hoc signed — users must right-click → Open on first
+# launch (or the DMG must be notarized with a Developer ID for a clean run).
+DMG = build/Clap.dmg
+dmg: bundle
+	rm -rf build/dmg-staging $(DMG)
+	mkdir -p build/dmg-staging
+	cp -R $(APP) build/dmg-staging/
+	ln -s /Applications build/dmg-staging/Applications
+	hdiutil create -volname "Clap" -srcfolder build/dmg-staging -ov -format UDZO $(DMG)
+
 run: bundle
 	$(APP)/Contents/MacOS/Clap
 
