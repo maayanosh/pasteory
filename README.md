@@ -34,8 +34,10 @@ your Mac.
 
 ### Download (recommended)
 
-Grab `Clap.dmg` from the [latest release](https://github.com/maayanosh/pasteory/releases/latest),
-open it, and drag **Clap** into **Applications**.
+Grab `Clap.dmg` from the [website](https://maayanosh.github.io/pasteory/) —
+it always serves the latest build from `main` — or pick a versioned build
+from the [releases page](https://github.com/maayanosh/pasteory/releases).
+Open the DMG and drag **Clap** into **Applications**.
 
 > The app is ad-hoc signed (not notarized), so on first launch macOS will
 > warn that the developer can't be verified — right-click the app and choose
