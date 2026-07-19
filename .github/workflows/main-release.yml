@@ -1,0 +1,43 @@
+name: Publish latest build
+
+# Every push to main rebuilds Clap.dmg and refreshes the rolling `latest`
+# (pre)release, so the website's download button always serves the current
+# main build at a stable URL:
+#   https://github.com/maayanosh/pasteory/releases/download/latest/Clap.dmg
+# Versioned releases (v* tags) are handled separately by release.yml and
+# stay the repository's "Latest release".
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run tests
+        run: make test
+
+      - name: Build DMG
+        run: make dmg
+
+      - name: Publish rolling 'latest' release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES="Rolling build from \`main\` @ ${GITHUB_SHA:0:7} ($(date -u +%Y-%m-%d)). For stable versioned builds, see the other releases."
+          if gh release view latest --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload latest build/Clap.dmg --clobber --repo "$GITHUB_REPOSITORY"
+            gh release edit latest --notes "$NOTES" --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create latest build/Clap.dmg \
+              --prerelease \
+              --title "Clap — latest build from main" \
+              --notes "$NOTES" \
+              --repo "$GITHUB_REPOSITORY"
+          fi

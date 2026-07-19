@@ -55,6 +55,7 @@ struct TestRunner {
         print("AppColorsTests"); appColorsTests()
         print("StoreTests");     storeTests()
         print("FilterTests");    filterTests()
+        print("ClipboardMonitorTests"); clipboardMonitorTests()
         print("")
         if testFailures == 0 {
             print("ALL \(testsRun) TESTS PASSED")

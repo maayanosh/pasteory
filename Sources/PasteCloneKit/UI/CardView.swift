@@ -9,9 +9,7 @@ struct CardView: View {
     @State private var hovering = false
 
     private var headerHex: String { AppColors.hex(for: item.sourceAppBundleID) }
-    private var headerTextColor: Color {
-        AppColors.luminance(ofHex: headerHex) > 0.6 ? .black : .white
-    }
+    private var headerTextColor: Color { AppColors.readableTextColor(onHex: headerHex) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -49,11 +47,11 @@ struct CardView: View {
             case .text, .richText, .link, .color:
                 return NSItemProvider(object: (item.text ?? "") as NSString)
             case .file:
-                let path = (item.text ?? "").split(separator: "\n").first.map(String.init) ?? ""
+                let path = item.filePaths.first ?? ""
                 return NSItemProvider(object: URL(fileURLWithPath: path) as NSURL)
             case .image:
                 if let file = item.imageFile,
-                   let image = NSImage(contentsOf: state.store.contentURL(file)) {
+                   let image = ImageCache.shared.image(at: state.store.contentURL(file)) {
                     return NSItemProvider(object: image)
                 }
                 return NSItemProvider()
@@ -138,10 +136,10 @@ struct CardView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             case .file:
-                let paths = (item.text ?? "").split(separator: "\n").map(String.init)
+                let paths = item.filePaths
                 if paths.count == 1 {
                     VStack(spacing: 8) {
-                        Image(nsImage: NSWorkspace.shared.icon(forFile: paths[0]))
+                        Image(nsImage: IconCache.shared.icon(forPath: paths[0]))
                             .resizable()
                             .frame(width: 48, height: 48)
                         Text(URL(fileURLWithPath: paths[0]).lastPathComponent)
@@ -156,7 +154,7 @@ struct CardView: View {
                         VStack(alignment: .leading, spacing: 6) {
                             ForEach(paths, id: \.self) { path in
                                 HStack(spacing: 8) {
-                                    Image(nsImage: NSWorkspace.shared.icon(forFile: path))
+                                    Image(nsImage: IconCache.shared.icon(forPath: path))
                                         .resizable()
                                         .frame(width: 24, height: 24)
                                     Text(URL(fileURLWithPath: path).lastPathComponent)
@@ -179,7 +177,7 @@ struct CardView: View {
                         .opacity(parsed.alpha)
                     Text((item.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines))
                         .font(.system(size: 13, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(parsed.luminance > 0.6 ? Color.black : .white)
+                        .foregroundStyle(parsed.readableTextColor)
                         .lineLimit(2)
                         .padding(8)
                 }
@@ -215,41 +213,15 @@ struct CardView: View {
         switch item.kind {
         case .text, .richText:
             guard let text = item.text else { return nil }
-            let byteSize = formatSize(Int64(Data(text.utf8).count))
+            let byteSize = formatByteSize(Int64(Data(text.utf8).count))
             return "\(text.count) chars · \(byteSize)"
-        case .file:
-            let paths = (item.text ?? "").split(separator: "\n").map(String.init)
-            let total = paths.reduce(Int64(0)) { acc, path in
-                let size = (try? FileManager.default.attributesOfItem(atPath: path)[.size] as? Int64) ?? 0
-                return acc + size
-            }
-            return total > 0 ? formatSize(total) : nil
-        case .image:
-            if let file = item.imageFile {
-                let url = state.store.contentURL(file)
-                let size = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int64) ?? 0
-                return size > 0 ? formatSize(size) : nil
-            }
-            return nil
+        case .file, .image:
+            // Sized once at capture; items captured before byteSize existed
+            // just omit the label (no per-redraw stat calls in a view body).
+            return item.byteSize.map(formatByteSize)
         case .link, .color:
             return nil
         }
-    }
-
-    private func formatSize(_ bytes: Int64) -> String {
-        let units = ["bytes", "KB", "MB", "GB", "TB"]
-        var value = Double(bytes)
-        var unitIndex = 0
-        while value >= 1024 && unitIndex < units.count - 1 {
-            value /= 1024
-            unitIndex += 1
-        }
-        if unitIndex == 0 {
-            return "\(bytes) bytes"
-        }
-        return value < 10
-            ? String(format: "%.1f %@", value, units[unitIndex])
-            : String(format: "%.0f %@", value, units[unitIndex])
     }
 
     @ViewBuilder

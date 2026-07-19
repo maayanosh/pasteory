@@ -25,8 +25,10 @@ public final class PanelController {
         self.appState = appState
         self.pasteService = pasteService
 
+        // Nominal rect only — showPanel() replaces it with the target
+        // screen's full width every time.
         panel = KeyablePanel(
-            contentRect: NSRect(x: 0, y: 0, width: 1200, height: Self.panelHeight),
+            contentRect: NSRect(x: 0, y: 0, width: 800, height: Self.panelHeight),
             styleMask: [.nonactivatingPanel, .borderless, .fullSizeContentView],
             backing: .buffered,
             defer: false
@@ -102,8 +104,10 @@ public final class PanelController {
         removeMonitors()
         appState.previewItem = nil
         appState.showNumbers = false
-        // Flush any debounced writes now rather than risk losing the last
-        // mutation if the app is force-quit before the 0.5s save timer fires.
+        // Kick off a save now rather than risk losing the last mutation if
+        // the app is force-quit before the 0.5s debounce fires. The write
+        // itself happens on a background queue, so it can't hitch the hide
+        // animation below.
         appState.store.saveNow()
 
         var down = panel.frame
@@ -113,7 +117,8 @@ public final class PanelController {
             ctx.timingFunction = CAMediaTimingFunction(name: .easeIn)
             panel.animator().setFrame(down, display: true)
         }, completionHandler: { [weak panel] in
-            Task { @MainActor in panel?.orderOut(nil) }
+            guard let panel else { return }
+            Task { @MainActor in panel.orderOut(nil) }
         })
     }
 
@@ -137,7 +142,8 @@ public final class PanelController {
         outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(
             matching: [.leftMouseDown, .rightMouseDown]
         ) { [weak self] _ in
-            Task { @MainActor in self?.hidePanel() }
+            guard let self else { return }
+            Task { @MainActor in self.hidePanel() }
         }
         // SwiftUI's ScrollView(.horizontal) only responds to trackpad
         // horizontal swipes, not a plain mouse wheel — but Paste's own

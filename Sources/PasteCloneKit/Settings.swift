@@ -36,11 +36,13 @@ public final class Settings: ObservableObject {
         self.defaults = defaults
         self.isPaused = defaults.bool(forKey: "isPaused")
         self.excludedBundleIDs = defaults.stringArray(forKey: "excludedBundleIDs") ?? []
-        let limit = defaults.integer(forKey: "historyLimit")
-        self.historyLimit = limit == 0 ? 500 : limit  // 0 = never saved → default 500; Int.max = Forever
+        // object(forKey:) distinguishes "never saved" from a stored value,
+        // so the defaults below don't rely on 0-sentinels.
+        self.historyLimit = defaults.object(forKey: "historyLimit") == nil
+            ? 500 : defaults.integer(forKey: "historyLimit")  // Int.max = Forever
         self.launchAtLogin = defaults.bool(forKey: "launchAtLogin")
-        let opacity = defaults.double(forKey: "panelOpacity")
-        self.panelOpacity = opacity == 0 ? 0.85 : min(max(opacity, 0.3), 1.0)
+        self.panelOpacity = defaults.object(forKey: "panelOpacity") == nil
+            ? 0.85 : min(max(defaults.double(forKey: "panelOpacity"), 0.3), 1.0)
         self.pasteOnEnter = defaults.bool(forKey: "pasteOnEnter")
     }
 

@@ -1,32 +1,43 @@
 import Foundation
 import CryptoKit
 
-public enum ClipKind: String, Codable, CaseIterable {
+public enum ClipKind: String, Codable, CaseIterable, Sendable {
     case text, richText, image, link, file, color
 }
 
-public struct ClipItem: Codable, Identifiable, Equatable {
+public struct ClipItem: Codable, Identifiable, Equatable, Sendable {
     public let id: UUID
     public var kind: ClipKind
-    public var text: String?          // plain text / URL string / file path(s)
+    public var text: String?          // plain text / URL string / legacy joined file paths
+    public var files: [String]?       // file paths (.file items; nil on pre-existing items)
     public var rtfFile: String?       // filename in content dir
     public var imageFile: String?     // filename in content dir
     public var thumbFile: String?     // small preview filename in content dir (images only)
     public var title: String?         // optional user-assigned label (⌘R)
+    public var byteSize: Int64?       // content size, computed once at capture (file/image items)
     public var sourceAppBundleID: String?
     public var sourceAppName: String?
     public var createdAt: Date
     public var pinboardID: UUID?      // nil = history
     public var contentHash: String
 
+    /// File paths for `.file` items. Newer items store the array (immune to
+    /// newlines in filenames); items captured before `files` existed fall
+    /// back to the historical newline-joined `text` form.
+    public var filePaths: [String] {
+        files ?? (text ?? "").split(separator: "\n").map(String.init)
+    }
+
     public init(
         id: UUID = UUID(),
         kind: ClipKind,
         text: String? = nil,
+        files: [String]? = nil,
         rtfFile: String? = nil,
         imageFile: String? = nil,
         thumbFile: String? = nil,
         title: String? = nil,
+        byteSize: Int64? = nil,
         sourceAppBundleID: String? = nil,
         sourceAppName: String? = nil,
         createdAt: Date = Date(),
@@ -36,10 +47,12 @@ public struct ClipItem: Codable, Identifiable, Equatable {
         self.id = id
         self.kind = kind
         self.text = text
+        self.files = files
         self.rtfFile = rtfFile
         self.imageFile = imageFile
         self.thumbFile = thumbFile
         self.title = title
+        self.byteSize = byteSize
         self.sourceAppBundleID = sourceAppBundleID
         self.sourceAppName = sourceAppName
         self.createdAt = createdAt
@@ -48,7 +61,7 @@ public struct ClipItem: Codable, Identifiable, Equatable {
     }
 }
 
-public struct Pinboard: Codable, Identifiable, Equatable {
+public struct Pinboard: Codable, Identifiable, Equatable, Sendable {
     public let id: UUID
     public var name: String
     public var colorHex: String
@@ -89,6 +102,22 @@ public func relativeTimeString(from date: Date, now: Date = Date()) -> String {
     if s < 3600 { return "\(s / 60)m" }
     if s < 86400 { return "\(s / 3600)h" }
     return "\(s / 86400)d"
+}
+
+/// Compact byte counts like "532 bytes", "4.2 KB", "13 MB" — shared by the
+/// card footers and the Settings data-size row.
+public func formatByteSize(_ bytes: Int64) -> String {
+    let units = ["bytes", "KB", "MB", "GB", "TB"]
+    var value = Double(bytes)
+    var unitIndex = 0
+    while value >= 1024 && unitIndex < units.count - 1 {
+        value /= 1024
+        unitIndex += 1
+    }
+    if unitIndex == 0 { return "\(bytes) bytes" }
+    return value < 10
+        ? String(format: "%.1f %@", value, units[unitIndex])
+        : String(format: "%.0f %@", value, units[unitIndex])
 }
 
 /// Rough heuristic for rendering text previews in monospace.

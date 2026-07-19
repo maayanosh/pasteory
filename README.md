@@ -32,6 +32,20 @@ your Mac.
 
 ## Installation
 
+### Download (recommended)
+
+Grab `Clap.dmg` from the [website](https://maayanosh.github.io/pasteory/) —
+it always serves the latest build from `main` — or pick a versioned build
+from the [releases page](https://github.com/maayanosh/pasteory/releases).
+Open the DMG and drag **Clap** into **Applications**.
+
+> The app is ad-hoc signed (not notarized), so on first launch macOS will
+> warn that the developer can't be verified — right-click the app and choose
+> **Open** once to approve it. Every CI run also uploads a `Clap-dmg`
+> artifact if you want a build of any branch.
+
+### Build from source
+
 Clone the repo and build the app bundle with `make`:
 
 ```sh

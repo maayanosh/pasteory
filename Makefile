@@ -6,6 +6,15 @@
 # by renaming it to module.modulemap.bak.)
 
 SWIFTC = swiftc
+# Opt-in strict concurrency diagnostics: `make STRICT=1 …`. The sources are
+# annotated with @MainActor/Sendable; complete checking surfaces data-race
+# diagnostics as warnings on current toolchains, but some older compilers
+# (e.g. Xcode 15's Swift 5.10) escalate a few of them to errors, so it stays
+# off by default.
+SWIFT_FLAGS = -swift-version 5
+ifeq ($(STRICT),1)
+SWIFT_FLAGS += -strict-concurrency=complete
+endif
 KIT_SRC := $(shell find Sources/PasteCloneKit -name '*.swift')
 TEST_SRC := $(shell find Tests/PasteCloneKitTests -name '*.swift')
 APP = build/Clap.app
@@ -15,14 +24,14 @@ all: bundle
 
 build/PasteClone: $(KIT_SRC) Sources/PasteClone/main.swift
 	mkdir -p build
-	$(SWIFTC) -O -swift-version 5 -module-name PasteClone \
+	$(SWIFTC) -O $(SWIFT_FLAGS) -module-name PasteClone \
 	  $(KIT_SRC) Sources/PasteClone/main.swift -o build/PasteClone
 
 build: build/PasteClone
 
 build/PasteCloneTests: $(KIT_SRC) $(TEST_SRC)
 	mkdir -p build
-	$(SWIFTC) -swift-version 5 -parse-as-library -module-name PasteCloneTests \
+	$(SWIFTC) $(SWIFT_FLAGS) -parse-as-library -module-name PasteCloneTests \
 	  $(KIT_SRC) $(TEST_SRC) -o build/PasteCloneTests
 
 test: build/PasteCloneTests
@@ -39,6 +48,17 @@ bundle: build/PasteClone
 	cp Resources/AppIcon.icns $(APP)/Contents/Resources/
 	xattr -cr $(APP)   # sips/iconutil leave xattrs codesign rejects as "detritus"
 	codesign --force --deep --sign - $(APP)
+
+# Distributable disk image: Clap.app plus an /Applications symlink for
+# drag-to-install. Ad-hoc signed — users must right-click → Open on first
+# launch (or the DMG must be notarized with a Developer ID for a clean run).
+DMG = build/Clap.dmg
+dmg: bundle
+	rm -rf build/dmg-staging $(DMG)
+	mkdir -p build/dmg-staging
+	cp -R $(APP) build/dmg-staging/
+	ln -s /Applications build/dmg-staging/Applications
+	hdiutil create -volname "Clap" -srcfolder build/dmg-staging -ov -format UDZO $(DMG)
 
 run: bundle
 	$(APP)/Contents/MacOS/Clap

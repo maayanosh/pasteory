@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clap — clipboard history for your Mac</title>
+<meta name="description" content="Clap is a free, open-source macOS clipboard manager: a slide-up panel with color-coded history cards, pinboards, search, and quick-paste shortcuts. Everything stays local.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+<style>
+  :root {
+    --bg: #0e1116;
+    --panel: #171c24;
+    --card: #1e242e;
+    --text: #e8ecf1;
+    --muted: #9aa4b2;
+    --accent: #4a90d9;
+    --accent-2: #3ab5a0;
+    --border: rgba(255, 255, 255, 0.09);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 24px; }
+
+  header { padding: 88px 0 56px; text-align: center; }
+  .logo { font-size: 56px; line-height: 1; }
+  h1 { font-size: 44px; letter-spacing: -0.02em; margin: 16px 0 8px; }
+  .tagline { font-size: 19px; color: var(--muted); max-width: 560px; margin: 0 auto 32px; }
+
+  .cta { display: inline-flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+  .btn {
+    display: inline-block; padding: 13px 26px; border-radius: 10px;
+    font-weight: 600; font-size: 16px; text-decoration: none;
+    transition: transform 0.1s ease, filter 0.1s ease;
+  }
+  .btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; }
+  .btn-ghost { border: 1px solid var(--border); color: var(--text); }
+  .fineprint { margin-top: 14px; font-size: 13px; color: var(--muted); }
+  .fineprint code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+
+  .hero-panel {
+    margin: 24px auto 0; max-width: 760px; border: 1px solid var(--border);
+    border-radius: 16px 16px 0 0; background: var(--panel); padding: 18px 18px 0;
+    overflow: hidden;
+  }
+  .hero-row { display: flex; gap: 12px; }
+  .hero-card {
+    flex: 0 0 150px; height: 130px; border-radius: 10px; background: var(--card);
+    border: 1px solid var(--border); overflow: hidden; text-align: left;
+  }
+  .hero-card .head { height: 26px; font-size: 10px; font-weight: 600; color: #fff;
+    display: flex; align-items: center; padding: 0 10px; }
+  .hero-card .body { padding: 8px 10px; font-size: 10px; color: var(--muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .hero-card.selected { outline: 2px solid var(--accent); }
+
+  section { padding: 48px 0; border-top: 1px solid var(--border); }
+  h2 { font-size: 26px; margin-bottom: 24px; letter-spacing: -0.01em; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .feature {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px;
+  }
+  .feature .emoji { font-size: 24px; }
+  .feature h3 { font-size: 16px; margin: 8px 0 4px; }
+  .feature p { font-size: 14px; color: var(--muted); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+  td:first-child { width: 190px; white-space: nowrap; }
+  kbd {
+    display: inline-block; padding: 2px 7px; border-radius: 6px; margin-right: 2px;
+    background: var(--card); border: 1px solid var(--border);
+    font: 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  .steps { counter-reset: step; list-style: none; }
+  .steps li { counter-increment: step; margin-bottom: 12px; padding-left: 40px; position: relative; }
+  .steps li::before {
+    content: counter(step); position: absolute; left: 0; top: 1px;
+    width: 26px; height: 26px; border-radius: 50%; background: var(--card);
+    border: 1px solid var(--border); color: var(--accent);
+    font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  }
+  .note {
+    margin-top: 20px; padding: 14px 18px; border-radius: 10px; font-size: 14px;
+    background: rgba(74, 144, 217, 0.08); border: 1px solid rgba(74, 144, 217, 0.25);
+    color: var(--muted);
+  }
+  .note strong { color: var(--text); }
+
+  footer { padding: 40px 0 56px; border-top: 1px solid var(--border);
+    font-size: 13px; color: var(--muted); text-align: center; }
+  footer a { color: var(--muted); }
+  a { color: var(--accent); }
+
+  @media (max-width: 560px) {
+    h1 { font-size: 34px; }
+    header { padding-top: 56px; }
+    .hero-card:nth-child(n+4) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <div class="logo">📋</div>
+  <h1>Clap</h1>
+  <p class="tagline">A free, open-source clipboard manager for macOS. Press <kbd>⇧</kbd><kbd>⌘</kbd><kbd>V</kbd> and your clipboard history slides up — everything stays on your Mac.</p>
+  <div class="cta">
+    <a class="btn btn-primary" href="https://github.com/maayanosh/pasteory/releases/download/latest/Clap.dmg">⬇&nbsp; Download Clap.dmg</a>
+    <a class="btn btn-ghost" href="https://github.com/maayanosh/pasteory">View on GitHub</a>
+  </div>
+  <p class="fineprint">
+    Latest build from <code>main</code> · macOS 14+ · Apple Silicon &amp; Intel ·
+    <a href="https://github.com/maayanosh/pasteory/releases">all releases</a>
+  </p>
+
+  <div class="hero-panel" aria-hidden="true">
+    <div class="hero-row">
+      <div class="hero-card selected">
+        <div class="head" style="background:#4a90d9">Safari</div>
+        <div class="body">https://example.com/article</div>
+      </div>
+      <div class="hero-card">
+        <div class="head" style="background:#5e5ce6">VS Code</div>
+        <div class="body">func paste() {<br>&nbsp;&nbsp;sendCmdV()<br>}</div>
+      </div>
+      <div class="hero-card">
+        <div class="head" style="background:#e8b93e; color:#000">Notes</div>
+        <div class="body">Pick up groceries, call the bank…</div>
+      </div>
+      <div class="hero-card">
+        <div class="head" style="background:#a550a7">Slack</div>
+        <div class="body">Shipping the fix today 🚀</div>
+      </div>
+      <div class="hero-card">
+        <div class="head" style="background:#3c3c43">Terminal</div>
+        <div class="body">#FF5733</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="wrap" id="features">
+  <h2>Features</h2>
+  <div class="grid">
+    <div class="feature"><span class="emoji">⌨️</span><h3>Global hotkey</h3><p>⇧⌘V slides a translucent panel up from the bottom of the screen without stealing focus from the app you're using.</p></div>
+    <div class="feature"><span class="emoji">🗂️</span><h3>Card timeline</h3><p>Text, rich text, images, links, colors, and files — each card color-coded by the app you copied it from.</p></div>
+    <div class="feature"><span class="emoji">🔎</span><h3>Type to search</h3><p>Just start typing while the panel is open to filter your history in real time.</p></div>
+    <div class="feature"><span class="emoji">📌</span><h3>Pinboards</h3><p>Organize snippets into named boards that persist outside of history.</p></div>
+    <div class="feature"><span class="emoji">⚡</span><h3>Quick paste</h3><p>Hold ⌘ to overlay numbers on the first cards; ⌘1–⌘9 pastes instantly. ⇧ pastes as plain text.</p></div>
+    <div class="feature"><span class="emoji">🔒</span><h3>Private by design</h3><p>No accounts, no sync, no network. Skips password-manager content, with a per-app exclusion list and a pause toggle.</p></div>
+  </div>
+</section>
+
+<section class="wrap" id="install">
+  <h2>Install</h2>
+  <ol class="steps">
+    <li>Download <a href="https://github.com/maayanosh/pasteory/releases/download/latest/Clap.dmg">Clap.dmg</a> and drag <strong>Clap</strong> into <strong>Applications</strong>.</li>
+    <li>First launch: <strong>right-click the app → Open</strong>, then confirm. (Clap is open source and ad-hoc signed, not notarized, so macOS shows a one-time warning.)</li>
+    <li>Grant the Accessibility permission when prompted — that's what lets Clap paste into the app you were using. Without it, Return copies to the clipboard instead.</li>
+  </ol>
+  <div class="note">
+    <strong>Where's my data?</strong> Clipboard history lives in
+    <code>~/Library/Application&nbsp;Support/PasteClone/</code> on your Mac. Nothing ever leaves your machine.
+  </div>
+</section>
+
+<section class="wrap" id="shortcuts">
+  <h2>Keyboard shortcuts</h2>
+  <table>
+    <tr><td><kbd>⇧</kbd><kbd>⌘</kbd><kbd>V</kbd></td><td>Open / close the panel</td></tr>
+    <tr><td>Type anything</td><td>Filter history by search</td></tr>
+    <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>Move selection</td></tr>
+    <tr><td><kbd>Return</kbd></td><td>Paste the selected item into the previous app</td></tr>
+    <tr><td><kbd>⇧</kbd><kbd>Return</kbd></td><td>Paste as plain text</td></tr>
+    <tr><td><kbd>⌘</kbd><kbd>1</kbd>–<kbd>9</kbd></td><td>Quick-paste one of the first nine items</td></tr>
+    <tr><td><kbd>Space</kbd></td><td>Quick Look preview</td></tr>
+    <tr><td><kbd>⇧</kbd><kbd>⌘</kbd><kbd>N</kbd></td><td>New pinboard</td></tr>
+    <tr><td><kbd>⌫</kbd></td><td>Delete the selected item</td></tr>
+    <tr><td><kbd>Esc</kbd></td><td>Close the panel</td></tr>
+  </table>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>Clap is MIT-licensed and <a href="https://github.com/maayanosh/pasteory">developed on GitHub</a> — issues and pull requests welcome.</p>
+    <p style="margin-top:8px">An independent project inspired by the design of <a href="https://pasteapp.io">Paste</a>; not endorsed by or affiliated with Paste/Wivpro&nbsp;Corp.</p>
+  </div>
+</footer>
+
+</body>
+</html>
